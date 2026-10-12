@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>melune ポートフォリオ はじめにお読みください</title>
+<style>
+:root{--ink:#493843;--bg:#FFF9F8;--rose:#EBA4B7;--tint:#FCEEF1;--line:#EADCE1;--mute:#7C6A75}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.9;font-size:15px}
+main{max-width:760px;margin:0 auto;padding:40px 20px 80px}
+h1{font-size:26px;letter-spacing:.08em;margin:0 0 6px}
+h2{font-size:19px;margin:44px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--rose)}
+h3{font-size:15px;margin:22px 0 4px}
+p{margin:6px 0}
+.lead{color:var(--mute)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:var(--tint);padding:1px 7px;border-radius:6px}
+pre{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;line-height:1.7;font-size:13px}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.btns a{display:inline-block;padding:10px 22px;border-radius:999px;background:var(--ink);color:#fff;text-decoration:none;font-size:14px}
+.btns a.sub{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.note{background:var(--tint);border-radius:14px;padding:12px 16px;margin:14px 0}
+ol,ul{padding-left:1.4em}
+li{margin:4px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--tint)}
+</style>
+</head>
+<body>
+<main>
+<h1>melune ポートフォリオ</h1>
+<p class="lead">ふつうのWebサイトとして、レンタルサーバーや無料ホスティングに置けるファイル一式です。ビルドやインストールは要りません。</p>
+
+<h2>1. まず自分のパソコンで確認する</h2>
+<p>下のボタンを押すか、フォルダの中のファイルをダブルクリックして開きます。Chrome・Edge・Safariなどの、ふつうのブラウザで開けます。</p>
+<div class="btns"><a href="site/index.html">公開サイトを見る</a><a class="sub" href="editor/index.html">編集ツールを開く</a></div>
+<p>最初は画像が入っていないので、淡い色の空のフレームが表示されます。編集ツールで画像と文字を入れると完成します。</p>
+
+<h2>2. フォルダの中身</h2>
+<pre>melune-portfolio/
+├─ START-HERE.html        この説明
+├─ site/                  ★ 公開するのはこのフォルダだけ
+│   ├─ index.html         トップページ
+│   ├─ favicon.svg        ブラウザのタブに出る小さなアイコン
+│   ├─ assets/            デザイン（style.css）と表示の仕組み（site.js）
+│   ├─ data/site.js       文字・設定・作品の並び（編集ツールが自動で書き出します）
+│   └─ images/            作品の画像など
+└─ editor/                ✕ 自分のパソコン専用。アップロードしないでください
+    ├─ index.html         編集ツール
+    ├─ editor.css
+    └─ editor.js</pre>
+
+<h2>3. 作品を入れて、更新する流れ</h2>
+<ol>
+<li><code>editor/index.html</code> を開きます。</li>
+<li>「プロフィール」でメイン画像・アイコン・紹介文を、「作品」で作品画像・タイトル・説明・カテゴリーを入れます。「文字」「デザイン」では見出しやボタンの文字、フォント、太さ、斜体、色を変えられます。</li>
+<li>入力内容は、自動で下書きとして保存されます。ブラウザを閉じても残ります。</li>
+<li>右上の「プレビュー」で、PC表示とスマホ表示を確認します。</li>
+<li>よければ「サイトに反映」を押します。更新用のZIPファイルが保存されます。</li>
+<li>ZIPを解凍して、中の <code>data</code> フォルダと <code>images</code> フォルダを、<code>site</code> フォルダに上書きコピーします。</li>
+<li><code>site</code> フォルダの中身を、ホスティングにアップロードします（4.を参照）。</li>
+</ol>
+<div class="note">編集ツールの「サイトに反映」は、ZIPを作るところまでです。ファイルを <code>site</code> フォルダに入れてアップロードするまで、公開ページは変わりません。下書きの途中の内容が、勝手に公開されることはありません。</div>
+
+<h2>4. インターネットに公開する</h2>
+<p><code>site</code> フォルダの中身（<code>index.html</code>、<code>assets</code>、<code>data</code>、<code>images</code>、<code>favicon.svg</code>）を、ホスティングのいちばん上の場所にアップロードします。トップページは <code>index.html</code> として表示されます。</p>
+<table>
+<tr><th>方法</th><th>向いている人</th><th>やること</th></tr>
+<tr><td>Netlify などの静的サイト向けサービス</td><td>手軽に始めたい</td><td><code>site</code> フォルダを、サービスの画面にドラッグ＆ドロップします。</td></tr>
+<tr><td>Cloudflare Pages / GitHub Pages</td><td>無料で長く使いたい</td><td>画面の案内に沿って <code>site</code> の中身を登録します。</td></tr>
+<tr><td>レンタルサーバー（FTP）</td><td>すでに契約している</td><td>FTPソフトで、公開用フォルダ（多くは <code>public_html</code>）に <code>site</code> の中身を入れます。</td></tr>
+</table>
+<p class="lead">各サービスの画面や手順は変わることがあります。アップロードの方法は、使うサービスの公式案内で確認してください。</p>
+<p>公開URLは、使うサービスが発行します。独自ドメインを使う場合も、そのサービスの設定画面で行います。</p>
+
+<h2>5. 知っておいてほしいこと</h2>
+<h3>「本人だけが編集できる」仕組みについて</h3>
+<p>公開されるのは <code>site</code> フォルダだけで、編集の画面はそこに入っていません。そのため、訪問者が見る公開ページに編集ボタンは出ませんし、公開ページから内容を書き換えることもできません。編集は、自分のパソコンにある <code>editor</code> でだけ行います。ログインの仕組みはありません。<code>editor</code> フォルダをアップロードしないことが、本人専用を守る方法です。</p>
+<h3>下書きの保存場所</h3>
+<p>下書きと、まだ書き出していない画像は、使っているパソコンのブラウザの中に保存されます。ブラウザのサイトデータを消したり、別のパソコンやブラウザで開いたりすると、下書きは見えません。大事な内容は「サイトに反映」でZIPを書き出し、<code>site</code> フォルダごとバックアップしておいてください。別のパソコンで続きをする場合は、<code>melune-portfolio</code> フォルダごとコピーします。</p>
+<h3>画像について</h3>
+<p>画像は、縦横比を保ったまま長辺2000px（メイン画像は2560px）までに整えて、<code>site/images</code> に保存されます。切り抜きや枠線は付きません。画像が外部のAIサービスなどに送られることはありません。編集ツールが外につなぐのは、フォントを読み込むためのGoogle Fontsだけです。</p>
+<p><code>images</code> フォルダの中のファイル名は変えないでください。使わなくなった画像のファイルは、手で削除して構いません。</p>
+<h3>フォント</h3>
+<p>フォントはGoogle Fontsから読み込むため、インターネットにつながっていないと、代わりのフォントで表示されます。</p>
+<h3>うまくいかないとき</h3>
+<ul>
+<li><b>画像が表示されない：</b> <code>site/images</code> に、書き出したZIPの <code>images</code> の中身を入れ忘れていないか確認してください。</li>
+<li><b>文字や並びが変わらない：</b> ZIPの <code>data/site.js</code> を <code>site/data</code> に上書きしたか、ブラウザを再読み込みしたか確認してください。</li>
+<li><b>編集ツールに下書きが出ない：</b> 別のブラウザで開いていないか確認してください。</li>
+</ul>
+</main>
+</body>
+</html>
