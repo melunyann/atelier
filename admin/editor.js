@@ -1,3 +1,6 @@
+/* melune 編集ツール（自分のパソコンで使う専用ページ）
+   - 編集内容（下書き）は、このブラウザの中に自動で保存されます。
+   - 「サイトに反映」を押すと、公開サイトに入れるファイル一式（ZIP）を書き出します。 */
 (function () {
 'use strict';
 
@@ -14,7 +17,7 @@ var FONT_HREF = 'https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wg
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-
+/* ---------- ブラウザ内の保存（IndexedDB） ---------- */
 var idb = null;
 function openDB() {
   return new Promise(function (res) {
@@ -43,7 +46,7 @@ function dbPut(s, k, v) { return tx(s, 'readwrite', function (o) { return o.put(
 function dbDel(s, k) { return tx(s, 'readwrite', function (o) { return o.delete(k); }); }
 function dbKeys(s) { return tx(s, 'readonly', function (o) { return o.getAllKeys(); }); }
 
-
+/* ---------- ZIP（圧縮なし）を作る ---------- */
 var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
 function crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
 function makeZip(files) {
@@ -70,7 +73,7 @@ function makeZip(files) {
   return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: 'application/zip' });
 }
 
-
+/* ---------- 状態 ---------- */
 var S = null, pubSig = '', saving = false, queued = false, dirty = false, saveErr = false, lastSaved = 0, timer = 0;
 var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', armed = null, armTimer = 0, previewDoc = '', previewMode = 'pc', memOnly = false;
 var blobs = {};
@@ -86,7 +89,7 @@ host.innerHTML =
 var elStatus = host.querySelector('#ed-status'), elTabs = host.querySelector('#ed-tabs'), elPanel = host.querySelector('#ed-panel'),
   elBusy = host.querySelector('#ed-busy'), elToast = host.querySelector('#ed-toast'), elOv = host.querySelector('#ed-ov');
 
-
+/* ---------- 小さな道具 ---------- */
 function fmtTime(t) { var d = new Date(t); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 function setBusy(t) { elBusy.textContent = t || ''; elBusy.hidden = !t; }
 var toastT = 0;
@@ -101,7 +104,7 @@ function arm(btn) {
   return false;
 }
 
-
+/* ---------- 保存 ---------- */
 function updateStatus() {
   if (!S) return;
   var diff = JSON.stringify(S) !== pubSig, h = '';
@@ -137,7 +140,7 @@ async function flush() {
 }
 document.addEventListener('visibilitychange', function () { if (document.hidden && dirty && S) saveDraft(); });
 
-
+/* ---------- 画像 ---------- */
 function blobToURL(b) { return URL.createObjectURL(b); }
 async function compress(file, maxEdge, q) {
   var bmp;
@@ -192,7 +195,7 @@ async function gcImages() {
   } catch (e) { }
 }
 
-
+/* ---------- 画面（パネル） ---------- */
 function field(label, input, cls) { return '<label class="f' + (cls ? ' ' + cls : '') + '">' + label + input + '</label>'; }
 function tin(path, label, opt) {
   opt = opt || {}; var v = pathGet(S, path) || '';
@@ -431,7 +434,7 @@ async function doZip() {
     setBusy(''); closeOv(); toast(e && e.message === 'save' ? '下書きを保存できなかったため、書き出しを中止しました。' : '書き出せませんでした。もう一度お試しください。', true);
   }
 }
-
+/* ---------- GitHub 接続（公開ページへの反映） ---------- */
 var GH_KEY = 'melune-gh';
 function guessRepo() {
   var m = location.hostname.match(/^([^.]+)\.github\.io$/i);
@@ -587,7 +590,7 @@ async function discardDraft() {
   touch(); renderPanel(); toast('下書きを破棄して、公開中の内容に戻しました');
 }
 
-
+/* ---------- イベント ---------- */
 function syncOpt(id, name) { Array.prototype.forEach.call(elPanel.querySelectorAll('option'), function (o) { if (o.value === id) o.textContent = name; }); }
 function onInput(e) {
   var t = e.target; if (!t || !S) return;
@@ -673,7 +676,7 @@ host.addEventListener('click', function (e) {
 elOv.addEventListener('click', function (e) { if (e.target === elOv && !elOv.querySelector('.pv')) closeOv(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !elOv.hidden) closeOv(); });
 
-
+/* ---------- 起動 ---------- */
 (async function () {
   idb = await openDB();
   ghLoad();
