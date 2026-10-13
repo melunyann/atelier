@@ -41,7 +41,7 @@ window.SITE_DATA = {
     "bg": "#FFF9F8",
     "accent": "#EBA4B7"
   },
-  "heroId": "fwk4xobfsb04",
+  "heroId": "de51tbmd7h77",
   "iconId": "1dhu4oras7rb",
   "imgs": {
     "1dhu4oras7rb": {
@@ -49,10 +49,10 @@ window.SITE_DATA = {
       "h": 640,
       "file": "img-1dhu4oras7rb.webp"
     },
-    "fwk4xobfsb04": {
+    "de51tbmd7h77": {
       "w": 2560,
-      "h": 1918,
-      "file": "img-fwk4xobfsb04.webp"
+      "h": 1440,
+      "file": "img-de51tbmd7h77.webp"
     }
   },
   "works": []
