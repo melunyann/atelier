@@ -1,6 +1,3 @@
-/* melune 編集ツール（自分のパソコンで使う専用ページ）
-   - 編集内容（下書き）は、このブラウザの中に自動で保存されます。
-   - 「サイトに反映」を押すと、公開サイトに入れるファイル一式（ZIP）を書き出します。 */
 (function () {
 'use strict';
 
@@ -17,7 +14,7 @@ var FONT_HREF = 'https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wg
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-/* ---------- ブラウザ内の保存（IndexedDB） ---------- */
+
 var idb = null;
 function openDB() {
   return new Promise(function (res) {
@@ -46,7 +43,7 @@ function dbPut(s, k, v) { return tx(s, 'readwrite', function (o) { return o.put(
 function dbDel(s, k) { return tx(s, 'readwrite', function (o) { return o.delete(k); }); }
 function dbKeys(s) { return tx(s, 'readonly', function (o) { return o.getAllKeys(); }); }
 
-/* ---------- ZIP（圧縮なし）を作る ---------- */
+
 var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
 function crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
 function makeZip(files) {
@@ -73,9 +70,9 @@ function makeZip(files) {
   return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: 'application/zip' });
 }
 
-/* ---------- 状態 ---------- */
+
 var S = null, pubSig = '', saving = false, queued = false, dirty = false, saveErr = false, lastSaved = 0, timer = 0;
-var tab = 'profile', addCat = '', armed = null, armTimer = 0, previewDoc = '', previewMode = 'pc', memOnly = false;
+var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', armed = null, armTimer = 0, previewDoc = '', previewMode = 'pc', memOnly = false;
 var blobs = {};
 var baseState = null, gh = { repo: '', branch: '', dir: '', token: '' }, ghState = '';
 var TABS = [['profile', 'プロフィール'], ['works', '作品'], ['text', '文字'], ['design', 'デザイン'], ['publish', '公開'], ['github', '接続']];
@@ -89,7 +86,7 @@ host.innerHTML =
 var elStatus = host.querySelector('#ed-status'), elTabs = host.querySelector('#ed-tabs'), elPanel = host.querySelector('#ed-panel'),
   elBusy = host.querySelector('#ed-busy'), elToast = host.querySelector('#ed-toast'), elOv = host.querySelector('#ed-ov');
 
-/* ---------- 小さな道具 ---------- */
+
 function fmtTime(t) { var d = new Date(t); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 function setBusy(t) { elBusy.textContent = t || ''; elBusy.hidden = !t; }
 var toastT = 0;
@@ -104,7 +101,7 @@ function arm(btn) {
   return false;
 }
 
-/* ---------- 保存 ---------- */
+
 function updateStatus() {
   if (!S) return;
   var diff = JSON.stringify(S) !== pubSig, h = '';
@@ -195,7 +192,7 @@ async function gcImages() {
   } catch (e) { }
 }
 
-/* ---------- 画面（パネル） ---------- */
+
 function field(label, input, cls) { return '<label class="f' + (cls ? ' ' + cls : '') + '">' + label + input + '</label>'; }
 function tin(path, label, opt) {
   opt = opt || {}; var v = pathGet(S, path) || '';
@@ -225,23 +222,43 @@ function panelProfile() {
 function catOptions(sel) {
   return '<option value=""' + (!sel ? ' selected' : '') + '>未分類</option>' + S.categories.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
 }
+function yearOptions(sel) {
+  var cy = new Date().getFullYear(), list = [];
+  for (var y = cy + 1; y >= 2000; y--) list.push(String(y));
+  if (sel && list.indexOf(sel) < 0) list.push(sel);
+  return '<option value=""' + (!sel ? ' selected' : '') + '>未設定</option>' + list.map(function (y) { return '<option value="' + y + '"' + (y === sel ? ' selected' : '') + '>' + y + '年</option>'; }).join('');
+}
+function styleOptions(sel) {
+  return '<option value=""' + (!sel ? ' selected' : '') + '>未設定</option>' + S.styles.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
+}
 function panelWorks() {
   if (!S.categories.some(function (c) { return c.id === addCat; })) addCat = S.categories.length ? S.categories[S.categories.length - 1].id : '';
-  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。</p>' +
-    '<div class="row"><label class="f" style="margin:0;min-width:160px"><span>追加するカテゴリー</span><select class="f-in" id="add-cat">' + catOptions(addCat) + '</select></label>' +
+  if (addStyle && !S.styles.some(function (c) { return c.id === addStyle; })) addStyle = '';
+  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。ここで選んだカテゴリー・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
+    '<div class="row"><label class="f" style="margin:0;min-width:140px"><span>カテゴリー</span><select class="f-in" id="add-cat">' + catOptions(addCat) + '</select></label>' +
+    '<label class="f" style="margin:0;min-width:110px"><span>制作した年</span><select class="f-in" id="add-year">' + yearOptions(addYear) + '</select></label>' +
+    '<label class="f" style="margin:0;min-width:140px"><span>絵柄</span><select class="f-in" id="add-style">' + styleOptions(addStyle) + '</select></label>' +
     '<label class="btn-p" style="align-self:flex-end">画像を選ぶ<input type="file" accept="image/*" multiple hidden data-file="add"></label></div></section>';
   h += '<section class="ed-card"><h2>カテゴリー</h2><p class="ed-hint">公開ページの切り替えボタンになります。「ALL」は自動で先頭に付きます。</p>';
   S.categories.forEach(function (c, i) {
     h += '<div class="cat-row"><input type="text" data-cat="' + i + '" value="' + esc(c.name) + '" aria-label="カテゴリー名"><div class="row"><button type="button" class="btn-s" data-act="cat-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="cat-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.categories.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-cat" data-i="' + i + '">削除</button></div></div>';
   });
   h += '<div class="row"><button type="button" class="btn-s" data-act="add-cat">カテゴリーを追加</button></div></section>';
+  h += '<section class="ed-card"><h2>絵柄</h2><p class="ed-hint">絵柄ごとの分類です（例：ふんわり塗り、キリッと、デフォルメなど）。公開ページでは、作品に付けた絵柄だけが切り替えボタンになります。</p>';
+  S.styles.forEach(function (c, i) {
+    h += '<div class="cat-row"><input type="text" data-sty="' + i + '" value="' + esc(c.name) + '" aria-label="絵柄の名前"><div class="row"><button type="button" class="btn-s" data-act="style-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="style-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.styles.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-style" data-i="' + i + '">削除</button></div></div>';
+  });
+  h += '<div class="row"><button type="button" class="btn-s" data-act="add-style">絵柄を追加</button></div></section>';
   h += '<section class="ed-card"><h2>作品一覧（' + S.works.length + '）</h2>';
   if (!S.works.length) h += '<p class="empty-note">まだ作品がありません。上の「画像を選ぶ」から追加してください。<br>追加するまでは、公開ページに空のフレームが並びます。</p>';
   S.works.forEach(function (w, i) {
     h += '<article class="wk"><div class="wk-thumb"><img data-load="' + esc(w.imgId) + '" alt=""><span class="wk-no">' + (i + 1) + '</span></div><div class="wk-body">' +
       field('タイトル', '<input type="text" data-w="' + w.id + '" data-k="title" value="' + esc(w.title) + '" placeholder="タイトル">') +
       field('説明', '<textarea rows="3" data-w="' + w.id + '" data-k="desc" placeholder="説明">' + esc(w.desc) + '</textarea>') +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0 12px">' +
       field('カテゴリー', '<select data-w="' + w.id + '" data-k="cat">' + catOptions(w.cat) + '</select>') +
+      field('制作した年', '<select data-w="' + w.id + '" data-k="year">' + yearOptions(w.year) + '</select>') +
+      field('絵柄', '<select data-w="' + w.id + '" data-k="style">' + styleOptions(w.style) + '</select>') + '</div>' +
       '<div class="row"><button type="button" class="btn-s" data-act="up" data-id="' + w.id + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="down" data-id="' + w.id + '"' + (i === S.works.length - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
       '<label class="btn-s">画像を差し替え<input type="file" accept="image/*" hidden data-file="replace" data-id="' + w.id + '"></label><button type="button" class="btn-d" data-act="rm-work" data-id="' + w.id + '">削除</button></div></div></article>';
   });
@@ -251,6 +268,10 @@ function panelText() {
   var h = '<section class="ed-card"><h2>ギャラリーの文字</h2>' +
     '<div class="pair">' + tin('texts.galleryEn', '見出し（英字）') + tin('texts.galleryJa', '見出し（日本語）') + '</div>' +
     tin('texts.filterAll', '「すべて表示」ボタンの文字') + tin('texts.emptyText', '作品がないときの文', { area: 1, rows: 2 }) + tin('texts.closeLabel', '拡大表示の「閉じる」ボタン（読み上げ用）') + '</section>';
+  h += '<section class="ed-card"><h2>絞り込みボタンの文字</h2><p class="ed-hint">ギャラリーの上に並ぶボタンの見出しです。年と絵柄の行は、作品に年や絵柄を付けたときだけ表示されます。</p>' +
+    '<div class="pair">' + tin('texts.filterLabelCat', 'カテゴリーの見出し') + tin('texts.filterLabelYear', '年の見出し') + '</div>' +
+    '<div class="pair">' + tin('texts.filterLabelStyle', '絵柄の見出し') + tin('texts.yearSuffix', '年の後ろに付ける文字') + '</div>' +
+    tin('texts.noMatchText', '該当する作品がないときの文') + '</section>';
   h += '<section class="ed-card"><h2>ご依頼セクション</h2><p class="ed-hint">リンク先URLを入れると、ギャラリーの下にボタン付きで表示されます。空のときは表示されません。</p>' +
     tin('texts.commissionEn', '見出し') + tin('texts.commissionBody', '説明文', { area: 1, rows: 3 }) +
     '<div class="pair">' + tin('texts.commissionButton', 'ボタンの文字') + tin('texts.commissionUrl', 'ボタンのリンク先URL', { type: 'url', ph: 'https://...' }) + '</div></section>';
@@ -318,7 +339,7 @@ async function handleFiles(kind, files, id, input) {
         setBusy('作品を読み込み中… (' + (i + 1) + '/' + arr.length + ')');
         try {
           var iid = await addImage(arr[i], 2000, 0.88);
-          S.works.push({ id: uid(), imgId: iid, title: '', desc: '', cat: addCat }); okN++; touch();
+          S.works.push({ id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle }); okN++; touch();
         } catch (e) { toast('「' + arr[i].name + '」を追加できませんでした。' + why(e), true); }
       }
       if (okN) toast(okN + '枚の作品を追加しました');
@@ -337,6 +358,7 @@ async function handleFiles(kind, files, id, input) {
   setBusy(''); renderPanel(); updateStatus();
 }
 function moveWork(id, d) { var i = S.works.findIndex(function (w) { return w.id === id; }), j = i + d; if (i < 0 || j < 0 || j >= S.works.length) return; var t = S.works[i]; S.works[i] = S.works[j]; S.works[j] = t; touch(); renderPanel(); }
+function moveStyle(i, d) { var j = i + d; if (j < 0 || j >= S.styles.length) return; var t = S.styles[i]; S.styles[i] = S.styles[j]; S.styles[j] = t; touch(); renderPanel(); }
 function moveCat(i, d) { var j = i + d; if (j < 0 || j >= S.categories.length) return; var t = S.categories[i]; S.categories[i] = S.categories[j]; S.categories[j] = t; touch(); renderPanel(); }
 function closeOv() { elOv.hidden = true; elOv.innerHTML = ''; previewDoc = ''; }
 
@@ -404,7 +426,7 @@ async function doZip() {
     setBusy(''); closeOv(); toast(e && e.message === 'save' ? '下書きを保存できなかったため、書き出しを中止しました。' : '書き出せませんでした。もう一度お試しください。', true);
   }
 }
-/* ---------- GitHub 接続（公開ページへの反映） ---------- */
+
 var GH_KEY = 'melune-gh';
 function guessRepo() {
   var m = location.hostname.match(/^([^.]+)\.github\.io$/i);
@@ -560,7 +582,8 @@ async function discardDraft() {
   touch(); renderPanel(); toast('下書きを破棄して、公開中の内容に戻しました');
 }
 
-/* ---------- イベント ---------- */
+
+function syncOpt(id, name) { Array.prototype.forEach.call(elPanel.querySelectorAll('option'), function (o) { if (o.value === id) o.textContent = name; }); }
 function onInput(e) {
   var t = e.target; if (!t || !S) return;
   var d = t.dataset || {};
@@ -579,9 +602,12 @@ function onInput(e) {
     touch();
   } else if (d.list === 'activities') { S.activities = t.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); touch(); }
   else if (d.link !== undefined) { var l = S.links[+d.link]; if (l) { l[d.k] = t.value; touch(); } }
-  else if (d.cat !== undefined) { var c = S.categories[+d.cat]; if (c) { c.name = t.value; touch(); } }
+  else if (d.cat !== undefined) { var c = S.categories[+d.cat]; if (c) { c.name = t.value; syncOpt(c.id, t.value); touch(); } }
+  else if (d.sty !== undefined) { var sc = S.styles[+d.sty]; if (sc) { sc.name = t.value; syncOpt(sc.id, t.value); touch(); } }
   else if (d.w) { var w = S.works.filter(function (x) { return x.id === d.w; })[0]; if (w) { w[d.k] = t.value; touch(); } }
   else if (t.id === 'add-cat') { addCat = t.value; }
+  else if (t.id === 'add-year') { addYear = t.value; }
+  else if (t.id === 'add-style') { addStyle = t.value; }
 }
 host.addEventListener('input', onInput);
 host.addEventListener('change', function (e) {
@@ -623,6 +649,13 @@ host.addEventListener('click', function (e) {
       S.categories.splice(i, 1); touch(); renderPanel(); break;
     case 'cat-up': moveCat(i, -1); break;
     case 'cat-down': moveCat(i, 1); break;
+    case 'add-style': S.styles.push({ id: uid(), name: '新しい絵柄' }); touch(); renderPanel(); break;
+    case 'rm-style':
+      var sc2 = S.styles[i];
+      if (sc2 && S.works.some(function (w) { return w.style === sc2.id; })) { toast('この絵柄を使っている作品があります。先に作品の絵柄を変更してください。', true); break; }
+      S.styles.splice(i, 1); touch(); renderPanel(); break;
+    case 'style-up': moveStyle(i, -1); break;
+    case 'style-down': moveStyle(i, 1); break;
     case 'up': moveWork(id, -1); break;
     case 'down': moveWork(id, 1); break;
     case 'rm-work':
@@ -635,7 +668,7 @@ host.addEventListener('click', function (e) {
 elOv.addEventListener('click', function (e) { if (e.target === elOv && !elOv.querySelector('.pv')) closeOv(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !elOv.hidden) closeOv(); });
 
-/* ---------- 起動 ---------- */
+
 (async function () {
   idb = await openDB();
   ghLoad();
