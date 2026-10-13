@@ -18,10 +18,24 @@ window.SITE_DATA = {
     "footer": "© 2026 melune"
   },
   "activities": [
+    "キャラクターイラスト",
     "ペアイラスト",
     "立ち絵"
   ],
-  "links": [],
+  "links": [
+    {
+      "label": "X",
+      "url": "https://x.com/melunyann"
+    },
+    {
+      "label": "Skeb",
+      "url": "https://skeb.jp/@melunyann"
+    },
+    {
+      "label": "お見積り",
+      "url": "https://mitsumotto.com/u/melune"
+    }
+  ],
   "categories": [
     {
       "id": "commission",
