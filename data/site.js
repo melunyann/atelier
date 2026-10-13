@@ -1,5 +1,5 @@
 /* melune portfolio — サイトの内容データ
-   編集ツール（editor/index.html）が自動で書き出します。手で編集する必要はありません。 */
+   編集ツール（admin/index.html）が自動で書き出します。手で編集する必要はありません。 */
 window.SITE_DATA = {
   "v": 1,
   "texts": {
@@ -43,8 +43,19 @@ window.SITE_DATA = {
     "bg": "#FFF9F8",
     "accent": "#EBA4B7"
   },
-  "heroId": null,
-  "iconId": null,
-  "imgs": {},
+  "heroId": "fwk4xobfsb04",
+  "iconId": "1dhu4oras7rb",
+  "imgs": {
+    "1dhu4oras7rb": {
+      "w": 533,
+      "h": 640,
+      "file": "img-1dhu4oras7rb.webp"
+    },
+    "fwk4xobfsb04": {
+      "w": 2560,
+      "h": 1918,
+      "file": "img-fwk4xobfsb04.webp"
+    }
+  },
   "works": []
 };
