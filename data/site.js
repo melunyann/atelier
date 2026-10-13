@@ -34,6 +34,10 @@ window.SITE_DATA = {
     {
       "label": "お見積り",
       "url": "https://mitsumotto.com/u/melune"
+    },
+    {
+      "label": "つなぐ",
+      "url": " https://tsunagu.cloud/users/melunyann"
     }
   ],
   "categories": [
