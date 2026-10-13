@@ -43,12 +43,14 @@ function defaultState() {
       commissionButton: 'ご依頼について', commissionUrl: '',
       footer: '© 2026 melune',
       filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', yearSuffix: '年',
-      noMatchText: 'この条件に合う作品は、まだありません。'
+      noMatchText: 'この条件に合う作品は、まだありません。',
+      sortLabel: '並び順', sortManual: 'おすすめ順', sortNew: '新しい順', sortOld: '古い順'
     },
     activities: ['美少女イラスト制作', 'キャラクターデザイン', '創作キャラクターのビジュアル制作', 'イラストコミッション'],
     links: [],
     categories: [{ id: 'commission', name: 'ご依頼作品' }, { id: 'original', name: '自主制作' }],
     styles: [],
+    sort: 'manual', showSort: true,
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
     heroId: null, iconId: null, imgs: {}, works: []
   };
@@ -69,6 +71,8 @@ function normalizeState(raw) {
     t.italic = !!d.italic;
     t.text = col(d.text, t.text); t.bg = col(d.bg, t.bg); t.accent = col(d.accent, t.accent);
   }
+  s.sort = ['manual', 'new', 'old'].indexOf(raw.sort) >= 0 ? raw.sort : 'manual';
+  s.showSort = raw.showSort !== false;
   s.heroId = raw.heroId ? String(raw.heroId) : null;
   s.iconId = raw.iconId ? String(raw.iconId) : null;
   s.imgs = {};
@@ -97,7 +101,7 @@ function petals(list) {
 }
 function imgRatio(S, id) { var m = S.imgs && S.imgs[id]; return (m && m.w && m.h) ? m.h / m.w : 1.33; }
 
-/* 画像の場所。ふだんは images フォルダ。編集ツールのプレビューでは差し替えられます。 */
+
 function srcOf(S, id) {
   var ov = window.SITE_PREVIEW && window.SITE_PREVIEW.urls;
   if (ov && ov[id]) return ov[id];
@@ -114,6 +118,8 @@ function filterGroups(S) {
   var used = {}; S.works.forEach(function (w) { if (w.style) used[w.style] = 1; });
   var sl = S.styles.filter(function (c) { return used[c.id]; });
   if (sl.length) groups.push({ g: 'style', label: T.filterLabelStyle, items: sl.map(function (c) { return { id: c.id, name: c.name }; }) });
+  var yc = Object.keys(ys).length;
+  if (S.showSort && yc > 1) groups.push({ g: 'sort', label: T.sortLabel, items: [{ id: 'manual', name: T.sortManual }, { id: 'new', name: T.sortNew }, { id: 'old', name: T.sortOld }] });
   return groups;
 }
 
@@ -139,8 +145,8 @@ function siteHTML(S) {
     h += '<div class="filters">' + groups.map(function (gr) {
       var lab = multi && gr.label ? esc(gr.label) : '';
       return '<div class="f-group" role="group"' + (lab ? ' aria-label="' + lab + '"' : '') + '>' + (lab ? '<span class="f-label">' + lab + '</span>' : '') +
-        '<button type="button" class="chip is-on" data-g="' + gr.g + '" data-f="all" aria-pressed="true">' + esc(T.filterAll) + '</button>' +
-        gr.items.map(function (it) { return '<button type="button" class="chip" data-g="' + gr.g + '" data-f="' + esc(it.id) + '" aria-pressed="false">' + esc(it.name) + '</button>'; }).join('') + '</div>';
+        (gr.g === 'sort' ? '' : '<button type="button" class="chip is-on" data-g="' + gr.g + '" data-f="all" aria-pressed="true">' + esc(T.filterAll) + '</button>') +
+        gr.items.map(function (it) { var on = gr.g === 'sort' && it.id === S.sort; return '<button type="button" class="chip' + (on ? ' is-on' : '') + '" data-g="' + gr.g + '" data-f="' + esc(it.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(it.name) + '</button>'; }).join('') + '</div>';
     }).join('') + '</div>';
   } else h += '<div class="filters" hidden></div>';
   h += '<div class="cols"><div class="col"></div><div class="col"></div></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
@@ -164,7 +170,7 @@ function mountSite(root, S, src) {
   var cols = Array.prototype.slice.call(site.querySelectorAll('.col'));
   var empty = site.querySelector('.empty');
   var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
-  var nodes = {}, filter = { cat: 'all', year: 'all', style: 'all' }, list = [], cur = -1, lastBtn = null, locked = false;
+  var nodes = {}, filter = { cat: 'all', year: 'all', style: 'all', sort: S.sort }, list = [], cur = -1, lastBtn = null, locked = false;
   function catName(id) { for (var i = 0; i < S.categories.length; i++) if (S.categories[i].id === id) return S.categories[i].name; return ''; }
   function styleName(id) { for (var i = 0; i < S.styles.length; i++) if (S.styles[i].id === id) return S.styles[i].name; return ''; }
   function node(w) {
@@ -184,6 +190,16 @@ function mountSite(root, S, src) {
       PH_RATIOS.forEach(function (r) { var d = doc.createElement('div'); d.className = 'ph'; d.setAttribute('aria-hidden', 'true'); d.style.aspectRatio = String(1 / r); d.innerHTML = '<span class="pt">' + PETAL + '</span>'; put(d, r); });
       empty.hidden = false;
     } else {
+      if (filter.sort !== 'manual') {
+        var dir = filter.sort === 'new' ? -1 : 1;
+        list = list.map(function (w, i) { return { w: w, i: i }; }).sort(function (a, b) {
+          var ya = a.w.year ? +a.w.year : null, yb = b.w.year ? +b.w.year : null;
+          if (ya === null && yb === null) return a.i - b.i;
+          if (ya === null) return 1;
+          if (yb === null) return -1;
+          return ya !== yb ? (ya - yb) * dir : a.i - b.i;
+        }).map(function (o) { return o.w; });
+      }
       list.forEach(function (w) { put(node(w), imgRatio(S, w.imgId)); });
       empty.textContent = S.texts.noMatchText || '';
       empty.hidden = list.length > 0;
@@ -244,7 +260,7 @@ window.MeluneSite = {
   siteVars: siteVars, mountSite: mountSite, srcOf: srcOf
 };
 
-
+/* ---- 公開ページの起動 ---- */
 var root = document.getElementById('melune-root');
 if (root) {
   var S = normalizeState(window.SITE_DATA);
