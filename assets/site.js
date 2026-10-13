@@ -1,6 +1,3 @@
-/* melune portfolio — site renderer
-   data/site.js が window.SITE_DATA を用意し、このファイルがページを組み立てます。
-   ふつうはこのファイルを編集する必要はありません。 */
 (function () {
 'use strict';
 
@@ -44,11 +41,14 @@ function defaultState() {
       commissionEn: 'Commission',
       commissionBody: 'イラストのご依頼を受け付けています。\nご依頼の流れや条件は、下のボタンからご確認ください。',
       commissionButton: 'ご依頼について', commissionUrl: '',
-      footer: '© 2026 melune'
+      footer: '© 2026 melune',
+      filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', yearSuffix: '年',
+      noMatchText: 'この条件に合う作品は、まだありません。'
     },
     activities: ['美少女イラスト制作', 'キャラクターデザイン', '創作キャラクターのビジュアル制作', 'イラストコミッション'],
     links: [],
     categories: [{ id: 'commission', name: 'ご依頼作品' }, { id: 'original', name: '自主制作' }],
+    styles: [],
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
     heroId: null, iconId: null, imgs: {}, works: []
   };
@@ -60,6 +60,7 @@ function normalizeState(raw) {
   if (Array.isArray(raw.activities)) s.activities = raw.activities.filter(function (x) { return typeof x === 'string'; });
   if (Array.isArray(raw.links)) s.links = raw.links.filter(Boolean).map(function (l) { return { label: String(l.label || ''), url: String(l.url || '') }; });
   if (Array.isArray(raw.categories)) s.categories = raw.categories.filter(function (c) { return c && c.id; }).map(function (c) { return { id: String(c.id), name: String(c.name || '') }; });
+  if (Array.isArray(raw.styles)) s.styles = raw.styles.filter(function (c) { return c && c.id; }).map(function (c) { return { id: String(c.id), name: String(c.name || '') }; });
   if (raw.design && typeof raw.design === 'object') {
     var d = raw.design, t = s.design;
     if (FONTS[d.headFont]) t.headFont = d.headFont;
@@ -76,7 +77,7 @@ function normalizeState(raw) {
     if (m && typeof m === 'object') s.imgs[k] = { w: +m.w || 0, h: +m.h || 0, file: String(m.file || '') };
   });
   s.works = Array.isArray(raw.works) ? raw.works.filter(function (w) { return w && w.id && w.imgId; }).map(function (w) {
-    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || '') };
+    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || '') };
   }) : [];
   return s;
 }
@@ -96,12 +97,23 @@ function petals(list) {
 }
 function imgRatio(S, id) { var m = S.imgs && S.imgs[id]; return (m && m.w && m.h) ? m.h / m.w : 1.33; }
 
-/* 画像の場所。ふだんは images フォルダ。編集ツールのプレビューでは差し替えられます。 */
 function srcOf(S, id) {
   var ov = window.SITE_PREVIEW && window.SITE_PREVIEW.urls;
   if (ov && ov[id]) return ov[id];
   var m = S.imgs && S.imgs[id];
   return (m && m.file) ? 'images/' + encodeURIComponent(m.file) : '';
+}
+
+function filterGroups(S) {
+  var T = S.texts, groups = [];
+  if (S.categories.length) groups.push({ g: 'cat', label: T.filterLabelCat, items: S.categories.map(function (c) { return { id: c.id, name: c.name }; }) });
+  var ys = {}; S.works.forEach(function (w) { if (w.year) ys[w.year] = 1; });
+  var yl = Object.keys(ys).sort(function (a, b) { return b - a; });
+  if (yl.length) groups.push({ g: 'year', label: T.filterLabelYear, items: yl.map(function (y) { return { id: y, name: y + (T.yearSuffix || '') }; }) });
+  var used = {}; S.works.forEach(function (w) { if (w.style) used[w.style] = 1; });
+  var sl = S.styles.filter(function (c) { return used[c.id]; });
+  if (sl.length) groups.push({ g: 'style', label: T.filterLabelStyle, items: sl.map(function (c) { return { id: c.id, name: c.name }; }) });
+  return groups;
 }
 
 function siteHTML(S) {
@@ -121,16 +133,21 @@ function siteHTML(S) {
   if (links.length) h += '<div class="links">' + links.map(function (l) { return '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(l.label || l.url) + '</a>'; }).join('') + '</div>';
   h += '</section>';
   h += '<section class="gallery" id="gallery"><div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.galleryEn) + '</h2>' + (T.galleryJa ? '<p class="g-ja">' + esc(T.galleryJa) + '</p>' : '') + '</div>';
-  if (S.categories.length) {
-    h += '<div class="filters"><button type="button" class="chip is-on" data-f="all" aria-pressed="true">' + esc(T.filterAll) + '</button>' +
-      S.categories.map(function (c) { return '<button type="button" class="chip" data-f="' + esc(c.id) + '" aria-pressed="false">' + esc(c.name) + '</button>'; }).join('') + '</div>';
+  var groups = filterGroups(S), multi = groups.length > 1;
+  if (groups.length) {
+    h += '<div class="filters">' + groups.map(function (gr) {
+      var lab = multi && gr.label ? esc(gr.label) : '';
+      return '<div class="f-group" role="group"' + (lab ? ' aria-label="' + lab + '"' : '') + '>' + (lab ? '<span class="f-label">' + lab + '</span>' : '') +
+        '<button type="button" class="chip is-on" data-g="' + gr.g + '" data-f="all" aria-pressed="true">' + esc(T.filterAll) + '</button>' +
+        gr.items.map(function (it) { return '<button type="button" class="chip" data-g="' + gr.g + '" data-f="' + esc(it.id) + '" aria-pressed="false">' + esc(it.name) + '</button>'; }).join('') + '</div>';
+    }).join('') + '</div>';
   } else h += '<div class="filters" hidden></div>';
   h += '<div class="cols"><div class="col"></div><div class="col"></div></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
   if (cta) h += '<section class="cta"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + '<a class="btn" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionButton || '詳しく見る') + '</a></div></section>';
   h += '<footer class="foot"><span class="copy">' + esc(T.footer) + '</span></footer>';
   h += '<div class="modal" hidden role="dialog" aria-modal="true" aria-label="作品の拡大表示"><div class="m-back" data-close></div>' +
     '<figure class="m-card"><button type="button" class="m-x" data-close aria-label="' + esc(T.closeLabel || '閉じる') + '">&times;</button>' +
-    '<div class="m-img"><img alt=""></div><figcaption class="m-cap"><span class="m-cat"></span><h3 class="m-title"></h3><p class="m-desc"></p></figcaption></figure>' +
+    '<div class="m-img"><img alt=""></div><figcaption class="m-cap"><div class="m-meta"></div><h3 class="m-title"></h3><p class="m-desc"></p></figcaption></figure>' +
     '<button type="button" class="m-nav prev" aria-label="前の作品">&#8249;</button><button type="button" class="m-nav next" aria-label="次の作品">&#8250;</button></div>';
   h += '</div>';
   return h;
@@ -145,9 +162,10 @@ function mountSite(root, S, src) {
   var site = root.querySelector('.site');
   var cols = Array.prototype.slice.call(site.querySelectorAll('.col'));
   var empty = site.querySelector('.empty');
-  var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mc = modal.querySelector('.m-cat'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
-  var nodes = {}, filter = 'all', list = [], cur = -1, lastBtn = null, locked = false;
+  var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
+  var nodes = {}, filter = { cat: 'all', year: 'all', style: 'all' }, list = [], cur = -1, lastBtn = null, locked = false;
   function catName(id) { for (var i = 0; i < S.categories.length; i++) if (S.categories[i].id === id) return S.categories[i].name; return ''; }
+  function styleName(id) { for (var i = 0; i < S.styles.length; i++) if (S.styles[i].id === id) return S.styles[i].name; return ''; }
   function node(w) {
     if (nodes[w.id]) return nodes[w.id];
     var n = doc.createElement('button'); n.type = 'button'; n.className = 'work'; n.setAttribute('data-id', w.id);
@@ -157,7 +175,7 @@ function mountSite(root, S, src) {
     nodes[w.id] = n; return n;
   }
   function layout() {
-    list = S.works.filter(function (w) { return filter === 'all' || w.cat === filter; });
+    list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (filter.year === 'all' || w.year === filter.year) && (filter.style === 'all' || w.style === filter.style); });
     cols.forEach(function (c) { while (c.firstChild) c.removeChild(c.firstChild); });
     var hs = [0, 0];
     function put(el, r) { var k = hs[0] <= hs[1] ? 0 : 1; cols[k].appendChild(el); hs[k] += r; }
@@ -166,6 +184,7 @@ function mountSite(root, S, src) {
       empty.hidden = false;
     } else {
       list.forEach(function (w) { put(node(w), imgRatio(S, w.imgId)); });
+      empty.textContent = S.texts.noMatchText || '';
       empty.hidden = list.length > 0;
     }
   }
@@ -176,7 +195,8 @@ function mountSite(root, S, src) {
     mi.src = src(w.imgId) || ''; mi.alt = w.title || '';
     mt.textContent = w.title || ''; mt.hidden = !w.title;
     md.textContent = w.desc || ''; md.hidden = !w.desc;
-    var cn = catName(w.cat); mc.textContent = cn; mc.hidden = !cn;
+    var metas = [catName(w.cat), w.year ? w.year + (S.texts.yearSuffix || '') : '', styleName(w.style)].filter(Boolean);
+    mm.innerHTML = metas.map(function (t) { return '<span class="m-cat">' + esc(t) + '</span>'; }).join(''); mm.hidden = !metas.length;
     modal.querySelector('.m-card').scrollTop = 0;
     Array.prototype.forEach.call(modal.querySelectorAll('.m-nav'), function (b) { b.hidden = list.length < 2; });
   }
@@ -197,8 +217,9 @@ function mountSite(root, S, src) {
   site.querySelector('.cols').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.work') : null; if (b) openM(b); });
   Array.prototype.forEach.call(site.querySelectorAll('.chip'), function (b) {
     b.addEventListener('click', function () {
-      filter = b.getAttribute('data-f');
-      Array.prototype.forEach.call(site.querySelectorAll('.chip'), function (x) { var on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+      var g = b.getAttribute('data-g');
+      filter[g] = b.getAttribute('data-f');
+      Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g="' + g + '"]'), function (x) { var on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
       layout();
     });
   });
@@ -222,7 +243,6 @@ window.MeluneSite = {
   siteVars: siteVars, mountSite: mountSite, srcOf: srcOf
 };
 
-/* ---- 公開ページの起動 ---- */
 var root = document.getElementById('melune-root');
 if (root) {
   var S = normalizeState(window.SITE_DATA);
