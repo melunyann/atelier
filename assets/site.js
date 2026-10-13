@@ -1,3 +1,6 @@
+/* melune portfolio — site renderer
+   data/site.js が window.SITE_DATA を用意し、このファイルがページを組み立てます。
+   ふつうはこのファイルを編集する必要はありません。 */
 (function () {
 'use strict';
 
@@ -101,7 +104,7 @@ function petals(list) {
 }
 function imgRatio(S, id) { var m = S.imgs && S.imgs[id]; return (m && m.w && m.h) ? m.h / m.w : 1.33; }
 
-
+/* 画像の場所。ふだんは images フォルダ。編集ツールのプレビューでは差し替えられます。 */
 function srcOf(S, id) {
   var ov = window.SITE_PREVIEW && window.SITE_PREVIEW.urls;
   if (ov && ov[id]) return ov[id];
