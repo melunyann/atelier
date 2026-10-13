@@ -137,7 +137,7 @@ async function flush() {
 }
 document.addEventListener('visibilitychange', function () { if (document.hidden && dirty && S) saveDraft(); });
 
-/* ---------- 画像 ---------- */
+
 function blobToURL(b) { return URL.createObjectURL(b); }
 async function compress(file, maxEdge, q) {
   var bmp;
@@ -249,6 +249,9 @@ function panelWorks() {
     h += '<div class="cat-row"><input type="text" data-sty="' + i + '" value="' + esc(c.name) + '" aria-label="絵柄の名前"><div class="row"><button type="button" class="btn-s" data-act="style-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="style-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.styles.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-style" data-i="' + i + '">削除</button></div></div>';
   });
   h += '<div class="row"><button type="button" class="btn-s" data-act="add-style">絵柄を追加</button></div></section>';
+  h += '<section class="ed-card"><h2>並び順</h2><p class="ed-hint">公開ページでの作品の並び方です。「新しい順」「古い順」は、作品に付けた制作年をもとにします。同じ年の作品は、下の作品一覧の並びのままです。年を付けていない作品は最後になります。</p>' +
+    field('最初に表示する並び順', '<select data-path="sort">' + [['manual', 'おすすめ順（作品一覧の並びのまま）'], ['new', '新しい順'], ['old', '古い順']].map(function (o) { return '<option value="' + o[0] + '"' + (S.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') +
+    '<label class="chk"><input type="checkbox" data-path="showSort"' + (S.showSort ? ' checked' : '') + '>訪問者が並び順を切り替えられるようにする（制作年が2種類以上あるときに表示）</label></section>';
   h += '<section class="ed-card"><h2>作品一覧（' + S.works.length + '）</h2>';
   if (!S.works.length) h += '<p class="empty-note">まだ作品がありません。上の「画像を選ぶ」から追加してください。<br>追加するまでは、公開ページに空のフレームが並びます。</p>';
   S.works.forEach(function (w, i) {
@@ -271,7 +274,9 @@ function panelText() {
   h += '<section class="ed-card"><h2>絞り込みボタンの文字</h2><p class="ed-hint">ギャラリーの上に並ぶボタンの見出しです。年と絵柄の行は、作品に年や絵柄を付けたときだけ表示されます。</p>' +
     '<div class="pair">' + tin('texts.filterLabelCat', 'カテゴリーの見出し') + tin('texts.filterLabelYear', '年の見出し') + '</div>' +
     '<div class="pair">' + tin('texts.filterLabelStyle', '絵柄の見出し') + tin('texts.yearSuffix', '年の後ろに付ける文字') + '</div>' +
-    tin('texts.noMatchText', '該当する作品がないときの文') + '</section>';
+    tin('texts.noMatchText', '該当する作品がないときの文') +
+    '<div class="pair">' + tin('texts.sortLabel', '並び順の見出し') + tin('texts.sortManual', '「おすすめ順」の文字') + '</div>' +
+    '<div class="pair">' + tin('texts.sortNew', '「新しい順」の文字') + tin('texts.sortOld', '「古い順」の文字') + '</div></section>';
   h += '<section class="ed-card"><h2>ご依頼セクション</h2><p class="ed-hint">リンク先URLを入れると、ギャラリーの下にボタン付きで表示されます。空のときは表示されません。</p>' +
     tin('texts.commissionEn', '見出し') + tin('texts.commissionBody', '説明文', { area: 1, rows: 3 }) +
     '<div class="pair">' + tin('texts.commissionButton', 'ボタンの文字') + tin('texts.commissionUrl', 'ボタンのリンク先URL', { type: 'url', ph: 'https://...' }) + '</div></section>';
