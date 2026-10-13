@@ -20,7 +20,11 @@ window.SITE_DATA = {
     "filterLabelYear": "年",
     "filterLabelStyle": "絵柄",
     "yearSuffix": "年",
-    "noMatchText": "この条件に合う作品は、まだありません。"
+    "noMatchText": "この条件に合う作品は、まだありません。",
+    "sortLabel": "並び順",
+    "sortManual": "おすすめ順",
+    "sortNew": "新しい順",
+    "sortOld": "古い順"
   },
   "activities": [
     "キャラクターイラスト",
@@ -73,6 +77,8 @@ window.SITE_DATA = {
       "name": "描き込みB"
     }
   ],
+  "sort": "new",
+  "showSort": true,
   "design": {
     "headFont": "serif",
     "bodyFont": "gothic",
@@ -139,11 +145,6 @@ window.SITE_DATA = {
       "w": 1000,
       "h": 1200,
       "file": "img-ek2aqt05fc4m.jpg"
-    },
-    "9mar2k8vfg6i": {
-      "w": 2000,
-      "h": 2000,
-      "file": "img-9mar2k8vfg6i.webp"
     },
     "57qymhf6fkpk": {
       "w": 1417,
@@ -269,6 +270,11 @@ window.SITE_DATA = {
       "w": 2000,
       "h": 2000,
       "file": "img-t0v3tqemjecy.webp"
+    },
+    "dgvffu7dnfe5": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-dgvffu7dnfe5.webp"
     }
   },
   "works": [
@@ -355,7 +361,7 @@ window.SITE_DATA = {
     },
     {
       "id": "1ldchvgofg7m",
-      "imgId": "9mar2k8vfg6i",
+      "imgId": "dgvffu7dnfe5",
       "title": "",
       "desc": "",
       "cat": "commission",
