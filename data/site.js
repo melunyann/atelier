@@ -77,7 +77,7 @@ window.SITE_DATA = {
     "noSave": true,
     "wm": true,
     "wmText": "melune sample",
-    "wmColor": "pink"
+    "wmColor": "white"
   },
   "design": {
     "headFont": "serif",
@@ -101,21 +101,21 @@ window.SITE_DATA = {
       "h": 1440,
       "file": "img-de51tbmd7h77.webp"
     },
-    "1lhdpywszri6": {
+    "il41ybdai14i": {
       "w": 1818,
       "h": 2000,
-      "file": "img-1lhdpywszri6.webp"
+      "file": "img-il41ybdai14i.webp"
     },
-    "0do1d9k0zuri": {
+    "l6o9lemci3d5": {
       "w": 2000,
       "h": 1419,
-      "file": "img-0do1d9k0zuri.webp"
+      "file": "img-l6o9lemci3d5.webp"
     }
   },
   "works": [
     {
       "id": "kkntj69hlejn",
-      "imgId": "1lhdpywszri6",
+      "imgId": "il41ybdai14i",
       "title": "",
       "desc": "",
       "cat": "commission",
@@ -125,7 +125,7 @@ window.SITE_DATA = {
     },
     {
       "id": "ut26bdofl4oi",
-      "imgId": "0do1d9k0zuri",
+      "imgId": "l6o9lemci3d5",
       "title": "",
       "desc": "",
       "cat": "",
