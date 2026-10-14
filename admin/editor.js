@@ -1,3 +1,6 @@
+/* melune 編集ツール（自分のパソコンで使う専用ページ）
+   - 編集内容（下書き）は、このブラウザの中に自動で保存されます。
+   - 「サイトに反映」を押すと、公開サイトに入れるファイル一式（ZIP）を書き出します。 */
 (function () {
 'use strict';
 
@@ -72,7 +75,7 @@ function makeZip(files) {
 
 /* ---------- 状態 ---------- */
 var S = null, pubSig = '', saving = false, queued = false, dirty = false, saveErr = false, lastSaved = 0, timer = 0;
-var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', armed = null, armTimer = 0, previewDoc = '', previewMode = 'pc', memOnly = false;
+var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', addPlan = '', armed = null, armTimer = 0, previewDoc = '', previewMode = 'pc', memOnly = false;
 var blobs = {};
 var baseState = null, gh = { repo: '', branch: '', dir: '', token: '' }, ghState = '';
 var TABS = [['profile', 'プロフィール'], ['works', '作品'], ['text', '文字'], ['design', 'デザイン'], ['publish', '公開'], ['github', '接続']];
@@ -231,11 +234,16 @@ function yearOptions(sel) {
 function styleOptions(sel) {
   return '<option value=""' + (!sel ? ' selected' : '') + '>未設定</option>' + S.styles.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
 }
+function planOptions(sel) {
+  return '<option value=""' + (!sel ? ' selected' : '') + '>未設定</option>' + S.plans.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
+}
 function panelWorks() {
   if (!S.categories.some(function (c) { return c.id === addCat; })) addCat = S.categories.length ? S.categories[S.categories.length - 1].id : '';
+  if (addPlan && !S.plans.some(function (c) { return c.id === addPlan; })) addPlan = '';
   if (addStyle && !S.styles.some(function (c) { return c.id === addStyle; })) addStyle = '';
-  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。ここで選んだカテゴリー・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
+  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。ここで選んだカテゴリー・プラン・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
     '<div class="row"><label class="f" style="margin:0;min-width:140px"><span>カテゴリー</span><select class="f-in" id="add-cat">' + catOptions(addCat) + '</select></label>' +
+    '<label class="f" style="margin:0;min-width:140px"><span>プラン</span><select class="f-in" id="add-plan">' + planOptions(addPlan) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:110px"><span>制作した年</span><select class="f-in" id="add-year">' + yearOptions(addYear) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:140px"><span>絵柄</span><select class="f-in" id="add-style">' + styleOptions(addStyle) + '</select></label>' +
     '<label class="btn-p" style="align-self:flex-end">画像を選ぶ<input type="file" accept="image/*" multiple hidden data-file="add"></label></div></section>';
@@ -246,6 +254,11 @@ function panelWorks() {
   h += '<div class="row"><button type="button" class="btn-s" data-act="add-cat">カテゴリーを追加</button></div>' +
     field('最初に表示するカテゴリー', '<select data-path="defaultCat"><option value="all"' + (S.defaultCat === 'all' ? ' selected' : '') + '>ALL（すべての作品）</option>' + S.categories.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === S.defaultCat ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select>') +
     '<p class="ed-hint" style="margin-top:6px">ここで選んだカテゴリーの作品だけが、最初に表示されます。公開ページで「ALL」を押すと、自主制作を含むすべての作品が表示されます。選んだカテゴリーに作品がまだ無いときは、ALLで表示します。</p></section>';
+  h += '<section class="ed-card"><h2>プラン</h2><p class="ed-hint">ご依頼の種類の分類です（例：アイコンイラスト、一枚絵など）。公開ページでは、作品に付けたプランだけが、「＋」ボタンの中の絞り込みタグ（複数選択できます）になります。</p>';
+  S.plans.forEach(function (c, i) {
+    h += '<div class="cat-row"><input type="text" data-pln="' + i + '" value="' + esc(c.name) + '" aria-label="プラン名"><div class="row"><button type="button" class="btn-s" data-act="plan-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="plan-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.plans.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-plan" data-i="' + i + '">削除</button></div></div>';
+  });
+  h += '<div class="row"><button type="button" class="btn-s" data-act="add-plan">プランを追加</button></div></section>';
   h += '<section class="ed-card"><h2>絵柄</h2><p class="ed-hint">絵柄ごとの分類です（例：ふんわり塗り、キリッと、デフォルメなど）。公開ページでは、作品に付けた絵柄だけが、「＋」ボタンの中の絞り込みタグ（複数選択できます）になります。</p>';
   S.styles.forEach(function (c, i) {
     h += '<div class="cat-row"><input type="text" data-sty="' + i + '" value="' + esc(c.name) + '" aria-label="絵柄の名前"><div class="row"><button type="button" class="btn-s" data-act="style-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="style-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.styles.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-style" data-i="' + i + '">削除</button></div></div>';
@@ -262,6 +275,7 @@ function panelWorks() {
       field('説明', '<textarea rows="3" data-w="' + w.id + '" data-k="desc" placeholder="説明">' + esc(w.desc) + '</textarea>') +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0 12px">' +
       field('カテゴリー', '<select data-w="' + w.id + '" data-k="cat">' + catOptions(w.cat) + '</select>') +
+      field('プラン', '<select data-w="' + w.id + '" data-k="plan">' + planOptions(w.plan) + '</select>') +
       field('制作した年', '<select data-w="' + w.id + '" data-k="year">' + yearOptions(w.year) + '</select>') +
       field('絵柄', '<select data-w="' + w.id + '" data-k="style">' + styleOptions(w.style) + '</select>') + '</div>' +
       '<div class="row"><button type="button" class="btn-s" data-act="up" data-id="' + w.id + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="down" data-id="' + w.id + '"' + (i === S.works.length - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
@@ -273,8 +287,8 @@ function panelText() {
   var h = '<section class="ed-card"><h2>ギャラリーの文字</h2>' +
     '<div class="pair">' + tin('texts.galleryEn', '見出し（英字）') + tin('texts.galleryJa', '見出し（日本語）') + '</div>' +
     tin('texts.filterAll', '「すべて表示」ボタンの文字') + tin('texts.emptyText', '作品がないときの文', { area: 1, rows: 2 }) + tin('texts.closeLabel', '拡大表示の「閉じる」ボタン（読み上げ用）') + '</section>';
-  h += '<section class="ed-card"><h2>絞り込みボタンの文字</h2><p class="ed-hint">ギャラリーの上の「＋」ボタンを開くと出る、年・絵柄・並び順の見出しです。年や絵柄は、作品に付けたときだけ表示されます。</p>' +
-    '<div class="pair">' + tin('texts.filterLabelYear', '年の見出し') + tin('texts.filterLabelStyle', '絵柄の見出し') + '</div>' +
+  h += '<section class="ed-card"><h2>絞り込みボタンの文字</h2><p class="ed-hint">ギャラリーの上の「＋」ボタンを開くと出る、プラン・年・絵柄・並び順の見出しです。プランや年、絵柄は、作品に付けたときだけ表示されます。</p>' +
+    '<div class="pair">' + tin('texts.filterLabelPlan', 'プランの見出し') + tin('texts.filterLabelYear', '年の見出し') + '</div><div class="pair">' + tin('texts.filterLabelStyle', '絵柄の見出し') + '<div></div></div>' +
     '<div class="pair">' + tin('texts.yearSuffix', '年の後ろに付ける文字') + tin('texts.moreLabel', '「＋」ボタンの文字') + '</div>' +
     tin('texts.clearLabel', '選択解除ボタンの文字') +
     tin('texts.noMatchText', '該当する作品がないときの文') +
@@ -347,7 +361,7 @@ async function handleFiles(kind, files, id, input) {
         setBusy('作品を読み込み中… (' + (i + 1) + '/' + arr.length + ')');
         try {
           var iid = await addImage(arr[i], 2000, 0.88);
-          S.works.push({ id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle }); okN++; touch();
+          S.works.push({ id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan }); okN++; touch();
         } catch (e) { toast('「' + arr[i].name + '」を追加できませんでした。' + why(e), true); }
       }
       if (okN) toast(okN + '枚の作品を追加しました');
@@ -366,6 +380,7 @@ async function handleFiles(kind, files, id, input) {
   setBusy(''); renderPanel(); updateStatus();
 }
 function moveWork(id, d) { var i = S.works.findIndex(function (w) { return w.id === id; }), j = i + d; if (i < 0 || j < 0 || j >= S.works.length) return; var t = S.works[i]; S.works[i] = S.works[j]; S.works[j] = t; touch(); renderPanel(); }
+function movePlan(i, d) { var j = i + d; if (j < 0 || j >= S.plans.length) return; var t = S.plans[i]; S.plans[i] = S.plans[j]; S.plans[j] = t; touch(); renderPanel(); }
 function moveStyle(i, d) { var j = i + d; if (j < 0 || j >= S.styles.length) return; var t = S.styles[i]; S.styles[i] = S.styles[j]; S.styles[j] = t; touch(); renderPanel(); }
 function moveCat(i, d) { var j = i + d; if (j < 0 || j >= S.categories.length) return; var t = S.categories[i]; S.categories[i] = S.categories[j]; S.categories[j] = t; touch(); renderPanel(); }
 function closeOv() { elOv.hidden = true; elOv.innerHTML = ''; previewDoc = ''; }
@@ -611,10 +626,12 @@ function onInput(e) {
   } else if (d.list === 'activities') { S.activities = t.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); touch(); }
   else if (d.link !== undefined) { var l = S.links[+d.link]; if (l) { l[d.k] = t.value; touch(); } }
   else if (d.cat !== undefined) { var c = S.categories[+d.cat]; if (c) { c.name = t.value; syncOpt(c.id, t.value); touch(); } }
+  else if (d.pln !== undefined) { var pc = S.plans[+d.pln]; if (pc) { pc.name = t.value; syncOpt(pc.id, t.value); touch(); } }
   else if (d.sty !== undefined) { var sc = S.styles[+d.sty]; if (sc) { sc.name = t.value; syncOpt(sc.id, t.value); touch(); } }
   else if (d.w) { var w = S.works.filter(function (x) { return x.id === d.w; })[0]; if (w) { w[d.k] = t.value; touch(); } }
   else if (t.id === 'add-cat') { addCat = t.value; }
   else if (t.id === 'add-year') { addYear = t.value; }
+  else if (t.id === 'add-plan') { addPlan = t.value; }
   else if (t.id === 'add-style') { addStyle = t.value; }
 }
 host.addEventListener('input', onInput);
@@ -658,6 +675,13 @@ host.addEventListener('click', function (e) {
       S.categories.splice(i, 1); touch(); renderPanel(); break;
     case 'cat-up': moveCat(i, -1); break;
     case 'cat-down': moveCat(i, 1); break;
+    case 'add-plan': S.plans.push({ id: uid(), name: '新しいプラン' }); touch(); renderPanel(); break;
+    case 'rm-plan':
+      var pc2 = S.plans[i];
+      if (pc2 && S.works.some(function (w) { return w.plan === pc2.id; })) { toast('このプランを使っている作品があります。先に作品のプランを変更してください。', true); break; }
+      S.plans.splice(i, 1); touch(); renderPanel(); break;
+    case 'plan-up': movePlan(i, -1); break;
+    case 'plan-down': movePlan(i, 1); break;
     case 'add-style': S.styles.push({ id: uid(), name: '新しい絵柄' }); touch(); renderPanel(); break;
     case 'rm-style':
       var sc2 = S.styles[i];
