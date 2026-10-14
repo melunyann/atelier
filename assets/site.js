@@ -1,3 +1,6 @@
+/* melune portfolio — site renderer
+   data/site.js が window.SITE_DATA を用意し、このファイルがページを組み立てます。
+   ふつうはこのファイルを編集する必要はありません。 */
 (function () {
 'use strict';
 
@@ -42,7 +45,7 @@ function defaultState() {
       commissionBody: 'イラストのご依頼を受け付けています。\nご依頼の流れや条件は、下のボタンからご確認ください。',
       commissionButton: 'ご依頼について', commissionUrl: '',
       footer: '© 2026 melune',
-      filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', yearSuffix: '年',
+      filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', filterLabelPlan: 'プラン', yearSuffix: '年',
       noMatchText: 'この条件に合う作品は、まだありません。',
       sortLabel: '並び順', sortManual: 'おすすめ順', sortNew: '新しい順', sortOld: '古い順',
       moreLabel: '絞り込み', clearLabel: '選択を解除'
@@ -51,6 +54,7 @@ function defaultState() {
     links: [],
     categories: [{ id: 'commission', name: 'ご依頼作品' }, { id: 'original', name: '自主制作' }],
     styles: [],
+    plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'manual', showSort: true, defaultCat: 'commission',
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
     heroId: null, iconId: null, imgs: {}, works: []
@@ -64,6 +68,7 @@ function normalizeState(raw) {
   if (Array.isArray(raw.links)) s.links = raw.links.filter(Boolean).map(function (l) { return { label: String(l.label || ''), url: String(l.url || '') }; });
   if (Array.isArray(raw.categories)) s.categories = raw.categories.filter(function (c) { return c && c.id; }).map(function (c) { return { id: String(c.id), name: String(c.name || '') }; });
   if (Array.isArray(raw.styles)) s.styles = raw.styles.filter(function (c) { return c && c.id; }).map(function (c) { return { id: String(c.id), name: String(c.name || '') }; });
+  if (Array.isArray(raw.plans)) s.plans = raw.plans.filter(function (c) { return c && c.id; }).map(function (c) { return { id: String(c.id), name: String(c.name || '') }; });
   if (raw.design && typeof raw.design === 'object') {
     var d = raw.design, t = s.design;
     if (FONTS[d.headFont]) t.headFont = d.headFont;
@@ -84,7 +89,7 @@ function normalizeState(raw) {
     if (m && typeof m === 'object') s.imgs[k] = { w: +m.w || 0, h: +m.h || 0, file: String(m.file || '') };
   });
   s.works = Array.isArray(raw.works) ? raw.works.filter(function (w) { return w && w.id && w.imgId; }).map(function (w) {
-    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || '') };
+    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || '') };
   }) : [];
   return s;
 }
@@ -121,6 +126,9 @@ function startCat(S) {
 function filterGroups(S) {
   var T = S.texts, groups = [];
   if (S.categories.length) groups.push({ g: 'cat', label: T.filterLabelCat, items: S.categories.map(function (c) { return { id: c.id, name: c.name }; }) });
+  var usedP = {}; S.works.forEach(function (w) { if (w.plan) usedP[w.plan] = 1; });
+  var pl = S.plans.filter(function (c) { return usedP[c.id]; });
+  if (pl.length) groups.push({ g: 'plan', label: T.filterLabelPlan, items: pl.map(function (c) { return { id: c.id, name: c.name }; }) });
   var ys = {}; S.works.forEach(function (w) { if (w.year) ys[w.year] = 1; });
   var yl = Object.keys(ys).sort(function (a, b) { return b - a; });
   if (yl.length) groups.push({ g: 'year', label: T.filterLabelYear, items: yl.map(function (y) { return { id: y, name: y + (T.yearSuffix || '') }; }) });
@@ -188,8 +196,9 @@ function mountSite(root, S, src) {
   var cols = Array.prototype.slice.call(site.querySelectorAll('.col'));
   var empty = site.querySelector('.empty');
   var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
-  var nodes = {}, filter = { cat: startCat(S), year: [], style: [], sort: S.sort }, list = [], cur = -1, lastBtn = null, locked = false;
+  var nodes = {}, filter = { cat: startCat(S), plan: [], year: [], style: [], sort: S.sort }, list = [], cur = -1, lastBtn = null, locked = false;
   function catName(id) { for (var i = 0; i < S.categories.length; i++) if (S.categories[i].id === id) return S.categories[i].name; return ''; }
+  function planName(id) { for (var i = 0; i < S.plans.length; i++) if (S.plans[i].id === id) return S.plans[i].name; return ''; }
   function styleName(id) { for (var i = 0; i < S.styles.length; i++) if (S.styles[i].id === id) return S.styles[i].name; return ''; }
   function node(w) {
     if (nodes[w.id]) return nodes[w.id];
@@ -200,7 +209,7 @@ function mountSite(root, S, src) {
     nodes[w.id] = n; return n;
   }
   function layout() {
-    list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (!filter.year.length || filter.year.indexOf(w.year) >= 0) && (!filter.style.length || filter.style.indexOf(w.style) >= 0); });
+    list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (!filter.plan.length || filter.plan.indexOf(w.plan) >= 0) && (!filter.year.length || filter.year.indexOf(w.year) >= 0) && (!filter.style.length || filter.style.indexOf(w.style) >= 0); });
     cols.forEach(function (c) { while (c.firstChild) c.removeChild(c.firstChild); });
     var hs = [0, 0];
     function put(el, r) { var k = hs[0] <= hs[1] ? 0 : 1; cols[k].appendChild(el); hs[k] += r; }
@@ -230,7 +239,7 @@ function mountSite(root, S, src) {
     mi.src = src(w.imgId) || ''; mi.alt = w.title || '';
     mt.textContent = w.title || ''; mt.hidden = !w.title;
     md.textContent = w.desc || ''; md.hidden = !w.desc;
-    var metas = [catName(w.cat), w.year ? w.year + (S.texts.yearSuffix || '') : '', styleName(w.style)].filter(Boolean);
+    var metas = [catName(w.cat), planName(w.plan), w.year ? w.year + (S.texts.yearSuffix || '') : '', styleName(w.style)].filter(Boolean);
     mm.innerHTML = metas.map(function (t) { return '<span class="m-cat">' + esc(t) + '</span>'; }).join(''); mm.hidden = !metas.length;
     modal.querySelector('.m-card').scrollTop = 0;
     Array.prototype.forEach.call(modal.querySelectorAll('.m-nav'), function (b) { b.hidden = list.length < 2; });
@@ -252,7 +261,7 @@ function mountSite(root, S, src) {
   site.querySelector('.cols').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.work') : null; if (b) openM(b); });
   var moreBtn = site.querySelector('.chip.more'), morePanel = site.querySelector('.f-more'), countEl = site.querySelector('.f-count'), clearBtn = site.querySelector('.f-clear');
   function syncMore() {
-    var n = filter.year.length + filter.style.length;
+    var n = filter.plan.length + filter.year.length + filter.style.length;
     if (countEl) { countEl.textContent = n; countEl.hidden = !n; }
     if (clearBtn) clearBtn.hidden = !n;
   }
@@ -261,14 +270,14 @@ function mountSite(root, S, src) {
     morePanel.hidden = !open; moreBtn.classList.toggle('is-open', open); moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
   if (clearBtn) clearBtn.addEventListener('click', function () {
-    filter.year = []; filter.style = [];
-    Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g="year"],.chip[data-g="style"]'), function (x) { x.classList.remove('is-on'); x.setAttribute('aria-pressed', 'false'); });
+    filter.plan = []; filter.year = []; filter.style = [];
+    Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g="plan"],.chip[data-g="year"],.chip[data-g="style"]'), function (x) { x.classList.remove('is-on'); x.setAttribute('aria-pressed', 'false'); });
     syncMore(); layout();
   });
   Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g]'), function (b) {
     b.addEventListener('click', function () {
       var g = b.getAttribute('data-g'), v = b.getAttribute('data-f');
-      if (g === 'year' || g === 'style') {
+      if (g === 'plan' || g === 'year' || g === 'style') {
         var arr = filter[g], k = arr.indexOf(v), on = k < 0;
         if (on) arr.push(v); else arr.splice(k, 1);
         b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
