@@ -243,8 +243,10 @@ function panelWorks() {
   S.categories.forEach(function (c, i) {
     h += '<div class="cat-row"><input type="text" data-cat="' + i + '" value="' + esc(c.name) + '" aria-label="カテゴリー名"><div class="row"><button type="button" class="btn-s" data-act="cat-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="cat-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.categories.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-cat" data-i="' + i + '">削除</button></div></div>';
   });
-  h += '<div class="row"><button type="button" class="btn-s" data-act="add-cat">カテゴリーを追加</button></div></section>';
-  h += '<section class="ed-card"><h2>絵柄</h2><p class="ed-hint">絵柄ごとの分類です（例：ふんわり塗り、キリッと、デフォルメなど）。公開ページでは、作品に付けた絵柄だけが切り替えボタンになります。</p>';
+  h += '<div class="row"><button type="button" class="btn-s" data-act="add-cat">カテゴリーを追加</button></div>' +
+    field('最初に表示するカテゴリー', '<select data-path="defaultCat"><option value="all"' + (S.defaultCat === 'all' ? ' selected' : '') + '>ALL（すべての作品）</option>' + S.categories.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === S.defaultCat ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select>') +
+    '<p class="ed-hint" style="margin-top:6px">ここで選んだカテゴリーの作品だけが、最初に表示されます。公開ページで「ALL」を押すと、自主制作を含むすべての作品が表示されます。選んだカテゴリーに作品がまだ無いときは、ALLで表示します。</p></section>';
+  h += '<section class="ed-card"><h2>絵柄</h2><p class="ed-hint">絵柄ごとの分類です（例：ふんわり塗り、キリッと、デフォルメなど）。公開ページでは、作品に付けた絵柄だけが、「＋」ボタンの中の絞り込みタグ（複数選択できます）になります。</p>';
   S.styles.forEach(function (c, i) {
     h += '<div class="cat-row"><input type="text" data-sty="' + i + '" value="' + esc(c.name) + '" aria-label="絵柄の名前"><div class="row"><button type="button" class="btn-s" data-act="style-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="style-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.styles.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-style" data-i="' + i + '">削除</button></div></div>';
   });
@@ -271,9 +273,10 @@ function panelText() {
   var h = '<section class="ed-card"><h2>ギャラリーの文字</h2>' +
     '<div class="pair">' + tin('texts.galleryEn', '見出し（英字）') + tin('texts.galleryJa', '見出し（日本語）') + '</div>' +
     tin('texts.filterAll', '「すべて表示」ボタンの文字') + tin('texts.emptyText', '作品がないときの文', { area: 1, rows: 2 }) + tin('texts.closeLabel', '拡大表示の「閉じる」ボタン（読み上げ用）') + '</section>';
-  h += '<section class="ed-card"><h2>絞り込みボタンの文字</h2><p class="ed-hint">ギャラリーの上に並ぶボタンの見出しです。年と絵柄の行は、作品に年や絵柄を付けたときだけ表示されます。</p>' +
-    '<div class="pair">' + tin('texts.filterLabelCat', 'カテゴリーの見出し') + tin('texts.filterLabelYear', '年の見出し') + '</div>' +
-    '<div class="pair">' + tin('texts.filterLabelStyle', '絵柄の見出し') + tin('texts.yearSuffix', '年の後ろに付ける文字') + '</div>' +
+  h += '<section class="ed-card"><h2>絞り込みボタンの文字</h2><p class="ed-hint">ギャラリーの上の「＋」ボタンを開くと出る、年・絵柄・並び順の見出しです。年や絵柄は、作品に付けたときだけ表示されます。</p>' +
+    '<div class="pair">' + tin('texts.filterLabelYear', '年の見出し') + tin('texts.filterLabelStyle', '絵柄の見出し') + '</div>' +
+    '<div class="pair">' + tin('texts.yearSuffix', '年の後ろに付ける文字') + tin('texts.moreLabel', '「＋」ボタンの文字') + '</div>' +
+    tin('texts.clearLabel', '選択解除ボタンの文字') +
     tin('texts.noMatchText', '該当する作品がないときの文') +
     '<div class="pair">' + tin('texts.sortLabel', '並び順の見出し') + tin('texts.sortManual', '「おすすめ順」の文字') + '</div>' +
     '<div class="pair">' + tin('texts.sortNew', '「新しい順」の文字') + tin('texts.sortOld', '「古い順」の文字') + '</div></section>';
@@ -651,6 +654,7 @@ host.addEventListener('click', function (e) {
     case 'rm-cat':
       var cc = S.categories[i];
       if (cc && S.works.some(function (w) { return w.cat === cc.id; })) { toast('このカテゴリーを使っている作品があります。先に作品のカテゴリーを変更してください。', true); break; }
+      if (cc && S.defaultCat === cc.id) S.defaultCat = 'all';
       S.categories.splice(i, 1); touch(); renderPanel(); break;
     case 'cat-up': moveCat(i, -1); break;
     case 'cat-down': moveCat(i, 1); break;
