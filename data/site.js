@@ -72,6 +72,12 @@ window.SITE_DATA = {
   "sort": "manual",
   "showSort": true,
   "defaultCat": "commission",
+  "protect": {
+    "noSave": true,
+    "wm": true,
+    "wmText": "melune sample",
+    "wmColor": "white"
+  },
   "design": {
     "headFont": "serif",
     "bodyFont": "gothic",
@@ -93,7 +99,38 @@ window.SITE_DATA = {
       "w": 2560,
       "h": 1440,
       "file": "img-de51tbmd7h77.webp"
+    },
+    "fzwprfjzl4nd": {
+      "w": 2000,
+      "h": 1419,
+      "file": "img-fzwprfjzl4nd.webp"
+    },
+    "pwtkgz4dleij": {
+      "w": 1818,
+      "h": 2000,
+      "file": "img-pwtkgz4dleij.webp"
     }
   },
-  "works": []
+  "works": [
+    {
+      "id": "kkntj69hlejn",
+      "imgId": "pwtkgz4dleij",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "",
+      "plan": ""
+    },
+    {
+      "id": "ut26bdofl4oi",
+      "imgId": "fzwprfjzl4nd",
+      "title": "",
+      "desc": "",
+      "cat": "",
+      "year": "2026",
+      "style": "",
+      "plan": ""
+    }
+  ]
 };
