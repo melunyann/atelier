@@ -32,7 +32,8 @@ window.SITE_DATA = {
   "activities": [
     "キャラクターイラスト",
     "ペアイラスト",
-    "立ち絵"
+    "立ち絵",
+    "一次創作"
   ],
   "links": [
     {
@@ -80,7 +81,7 @@ window.SITE_DATA = {
   },
   "design": {
     "headFont": "serif",
-    "bodyFont": "gothic",
+    "bodyFont": "maru",
     "weight": "normal",
     "italic": false,
     "text": "#493843",
