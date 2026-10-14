@@ -69,14 +69,14 @@ window.SITE_DATA = {
       "name": "一枚絵"
     }
   ],
-  "sort": "manual",
+  "sort": "new",
   "showSort": true,
   "defaultCat": "commission",
   "protect": {
     "noSave": true,
     "wm": true,
     "wmText": "melune sample",
-    "wmColor": "white"
+    "wmColor": "pink"
   },
   "design": {
     "headFont": "serif",
