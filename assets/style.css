@@ -1,8 +1,9 @@
+/* melune portfolio — site styles */
 html,body{margin:0;padding:0}
 body{background:#FFF9F8;color-scheme:light}
 img{max-width:100%}
 [hidden]{display:none!important}
-
+/* Layout concept: full-bleed hero, round icon overlapping its lower edge, centered profile, two-column natural-ratio gallery. */
 .site{
   --ink:#493843;--bg:#FFF9F8;--accent:#EBA4B7;
   --f-head:'Cormorant Garamond','Shippori Mincho','Hiragino Mincho ProN',serif;
@@ -65,6 +66,17 @@ img{max-width:100%}
 .site .filters{display:flex;flex-direction:column;align-items:center;gap:10px;margin:26px 0 clamp(18px,3vw,30px)}
 .site .f-group{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
 .site .f-label{font-size:11px;letter-spacing:.24em;color:var(--ink-3);margin-right:6px}
+.site .f-main{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
+.site .chip.more{display:inline-flex;align-items:center;gap:6px;border-style:dashed}
+.site .chip.more .plus{display:inline-block;font-size:17px;line-height:1;transition:transform .25s}
+.site .chip.more.is-open{background:var(--tint)}
+.site .chip.more.is-open .plus{transform:rotate(45deg)}
+.site .f-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:var(--ink);font-size:11px;line-height:1}
+.site .f-more{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:640px;padding:16px clamp(12px,3vw,24px);border-radius:20px;background:var(--tint)}
+.site .f-more .chip{background:var(--bg)}
+.site .f-more .chip:hover{background:var(--tint-2)}
+.site .f-more .chip.is-on{background:var(--tint-2);border-color:transparent}
+.site .f-clear{border:0;background:none;padding:2px 6px;cursor:pointer;font-size:12px;color:var(--ink-3);text-decoration:underline;text-underline-offset:4px;letter-spacing:.1em}
 .site .chip{font-size:13px;letter-spacing:.12em;padding:5px 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-2);cursor:pointer;transition:background-color .2s,color .2s,border-color .2s}
 .site .chip:hover{background:var(--tint)}
 .site .chip.is-on{background:var(--tint-2);border-color:transparent;color:var(--ink)}
