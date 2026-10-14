@@ -142,7 +142,22 @@ document.addEventListener('visibilitychange', function () { if (document.hidden 
 
 /* ---------- 画像 ---------- */
 function blobToURL(b) { return URL.createObjectURL(b); }
-async function compress(file, maxEdge, q) {
+function drawWatermark(ctx, w, h, text) {
+  var fs = Math.max(12, Math.round(Math.max(w, h) / 40));
+  ctx.save();
+  ctx.font = '600 ' + fs + 'px "Hiragino Kaku Gothic ProN","Yu Gothic",Arial,sans-serif';
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, fs / 7);
+  ctx.strokeStyle = 'rgba(60,40,55,.28)'; ctx.fillStyle = 'rgba(255,255,255,.42)';
+  var tw = ctx.measureText(text).width, sx = tw + fs * 3, sy = fs * 4.6, dd = Math.ceil(Math.sqrt(w * w + h * h) / 2) + sx;
+  ctx.translate(w / 2, h / 2); ctx.rotate(-Math.PI / 6);
+  var row = 0;
+  for (var y = -dd; y <= dd; y += sy, row++) {
+    for (var x = -dd + (row % 2 ? sx / 2 : 0); x <= dd; x += sx) { ctx.strokeText(text, x, y); ctx.fillText(text, x, y); }
+  }
+  ctx.restore();
+}
+async function compress(file, maxEdge, q, wm) {
   var bmp;
   try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
   catch (e) {
@@ -150,9 +165,10 @@ async function compress(file, maxEdge, q) {
   }
   var sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
   var k = Math.min(1, maxEdge / Math.max(sw, sh)), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
-  if (k === 1 && file.size < 1200 * 1024 && /^image\/(jpeg|webp|png)$/.test(file.type)) return { blob: file, w: w, h: h };
+  if (!wm && k === 1 && file.size < 1200 * 1024 && /^image\/(jpeg|webp|png)$/.test(file.type)) return { blob: file, w: w, h: h };
   var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
   var ctx = cv.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(bmp, 0, 0, w, h);
+  if (wm) drawWatermark(ctx, w, h, wm);
   var blob = await new Promise(function (r) { cv.toBlob(r, 'image/webp', q); });
   if (!blob || blob.type !== 'image/webp') {
     ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
@@ -160,16 +176,17 @@ async function compress(file, maxEdge, q) {
   }
   return { blob: blob, w: w, h: h };
 }
-async function addImage(file, maxEdge, q) {
+async function addImage(file, maxEdge, q, wm) {
   if (!/^image\//.test(file.type)) throw new Error('type');
   if (file.size > 80 * MB) throw new Error('big');
-  var r = await compress(file, maxEdge, q), id = uid();
+  var r = await compress(file, maxEdge, q, wm), id = uid();
   var ext = r.blob.type === 'image/webp' ? 'webp' : r.blob.type === 'image/png' ? 'png' : 'jpg';
   blobs[id] = { blob: r.blob, url: blobToURL(r.blob) };
   if (idb) { try { await dbPut('img', id, { blob: r.blob, type: r.blob.type }); } catch (e) { memOnly = true; } } else memOnly = true;
   S.imgs[id] = { w: r.w, h: r.h, file: 'img-' + id + '.' + ext };
   return id;
 }
+function wmText() { return (S.protect && S.protect.wm && S.protect.wmText) ? S.protect.wmText : ''; }
 async function getBlob(id) {
   if (blobs[id]) return blobs[id].blob;
   if (idb) { try { var rec = await dbGet('img', id); if (rec && rec.blob) { blobs[id] = { blob: rec.blob, url: blobToURL(rec.blob) }; return rec.blob; } } catch (e) { } }
@@ -264,6 +281,11 @@ function panelWorks() {
     h += '<div class="cat-row"><input type="text" data-sty="' + i + '" value="' + esc(c.name) + '" aria-label="絵柄の名前"><div class="row"><button type="button" class="btn-s" data-act="style-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="style-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.styles.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-style" data-i="' + i + '">削除</button></div></div>';
   });
   h += '<div class="row"><button type="button" class="btn-s" data-act="add-style">絵柄を追加</button></div></section>';
+  h += '<section class="ed-card"><h2>画像の保護</h2><p class="ed-hint">完全に防ぐことはできませんが、気軽な保存や持ち出し、AIの学習への利用を防ぎやすくします。</p>' +
+    '<label class="chk"><input type="checkbox" data-path="protect.noSave"' + (S.protect.noSave ? ' checked' : '') + '>右クリック・長押し・ドラッグでの画像保存をできなくする</label>' +
+    '<label class="chk"><input type="checkbox" data-path="protect.wm"' + (S.protect.wm ? ' checked' : '') + '>作品の画像に透かしを全体に敷き詰める</label>' +
+    tin('protect.wmText', '透かしの文字') +
+    '<p class="ed-hint" style="margin-top:6px">透かしは、これから追加する作品、または「画像を差し替え」した作品に付きます（画像に焼き込みます）。すでに追加した作品には付かないので、入れ直してください。メイン画像とアイコンには付きません。外部のサービスやAIには送りません。</p></section>';
   h += '<section class="ed-card"><h2>並び順</h2><p class="ed-hint">公開ページでの作品の並び方です。「新しい順」「古い順」は、作品に付けた制作年をもとにします。同じ年の作品は、下の作品一覧の並びのままです。年を付けていない作品は最後になります。</p>' +
     field('最初に表示する並び順', '<select data-path="sort">' + [['manual', 'おすすめ順（作品一覧の並びのまま）'], ['new', '新しい順'], ['old', '古い順']].map(function (o) { return '<option value="' + o[0] + '"' + (S.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') +
     '<label class="chk"><input type="checkbox" data-path="showSort"' + (S.showSort ? ' checked' : '') + '>訪問者が並び順を切り替えられるようにする（制作年が2種類以上あるときに表示）</label></section>';
@@ -360,14 +382,14 @@ async function handleFiles(kind, files, id, input) {
       for (var i = 0; i < arr.length; i++) {
         setBusy('作品を読み込み中… (' + (i + 1) + '/' + arr.length + ')');
         try {
-          var iid = await addImage(arr[i], 2000, 0.88);
+          var iid = await addImage(arr[i], 2000, 0.88, wmText());
           S.works.push({ id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan }); okN++; touch();
         } catch (e) { toast('「' + arr[i].name + '」を追加できませんでした。' + why(e), true); }
       }
       if (okN) toast(okN + '枚の作品を追加しました');
     } else {
       setBusy('画像を読み込み中…');
-      var nid = await addImage(arr[0], kind === 'hero' ? 2560 : kind === 'icon' ? 640 : 2000, 0.88);
+      var nid = await addImage(arr[0], kind === 'hero' ? 2560 : kind === 'icon' ? 640 : 2000, 0.88, (kind === 'hero' || kind === 'icon') ? '' : wmText());
       if (kind === 'hero') { var o = S.heroId; S.heroId = nid; releaseIfUnused(o); }
       else if (kind === 'icon') { var o2 = S.iconId; S.iconId = nid; releaseIfUnused(o2); }
       else {
