@@ -56,6 +56,7 @@ function defaultState() {
     styles: [],
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'manual', showSort: true, defaultCat: 'commission',
+    protect: { noSave: true, wm: true, wmText: 'melune sample' },
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
     heroId: null, iconId: null, imgs: {}, works: []
   };
@@ -81,6 +82,11 @@ function normalizeState(raw) {
   s.showSort = raw.showSort !== false;
   var dc = typeof raw.defaultCat === 'string' ? raw.defaultCat : 'commission';
   s.defaultCat = (dc === 'all' || s.categories.some(function (c) { return c.id === dc; })) ? dc : 'all';
+  if (raw.protect && typeof raw.protect === 'object') {
+    s.protect.noSave = raw.protect.noSave !== false;
+    s.protect.wm = raw.protect.wm !== false;
+    if (typeof raw.protect.wmText === 'string') s.protect.wmText = raw.protect.wmText.slice(0, 40);
+  }
   s.heroId = raw.heroId ? String(raw.heroId) : null;
   s.iconId = raw.iconId ? String(raw.iconId) : null;
   s.imgs = {};
@@ -193,6 +199,12 @@ function mountSite(root, S, src) {
     var s = src(im.getAttribute('data-img')); if (s) im.src = s; else im.hidden = true;
   });
   var site = root.querySelector('.site');
+  if (S.protect && S.protect.noSave) {
+    site.classList.add('nosave');
+    Array.prototype.forEach.call(site.querySelectorAll('img'), function (im) { im.draggable = false; });
+    site.addEventListener('contextmenu', function (e) { var t = e.target; if (t && t.closest && t.closest('img,.work,.m-img,.hero,.icon-wrap')) e.preventDefault(); });
+    site.addEventListener('dragstart', function (e) { if (e.target && e.target.tagName === 'IMG') e.preventDefault(); });
+  }
   var cols = Array.prototype.slice.call(site.querySelectorAll('.col'));
   var empty = site.querySelector('.empty');
   var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
