@@ -53,7 +53,7 @@ function defaultState() {
     styles: [],
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'manual', showSort: true, defaultCat: 'commission',
-    protect: { noSave: true, wm: true, wmText: 'melune sample' },
+    protect: { noSave: true, wm: true, wmText: 'melune sample', wmColor: 'white' },
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
     heroId: null, iconId: null, imgs: {}, works: []
   };
@@ -82,6 +82,7 @@ function normalizeState(raw) {
   if (raw.protect && typeof raw.protect === 'object') {
     s.protect.noSave = raw.protect.noSave !== false;
     s.protect.wm = raw.protect.wm !== false;
+    if (['white', 'gray', 'pink'].indexOf(raw.protect.wmColor) >= 0) s.protect.wmColor = raw.protect.wmColor;
     if (typeof raw.protect.wmText === 'string') s.protect.wmText = raw.protect.wmText.slice(0, 40);
   }
   s.heroId = raw.heroId ? String(raw.heroId) : null;
