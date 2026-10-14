@@ -1,6 +1,3 @@
-/* melune 編集ツール（自分のパソコンで使う専用ページ）
-   - 編集内容（下書き）は、このブラウザの中に自動で保存されます。
-   - 「サイトに反映」を押すと、公開サイトに入れるファイル一式（ZIP）を書き出します。 */
 (function () {
 'use strict';
 
@@ -142,13 +139,22 @@ document.addEventListener('visibilitychange', function () { if (document.hidden 
 
 /* ---------- 画像 ---------- */
 function blobToURL(b) { return URL.createObjectURL(b); }
-function drawWatermark(ctx, w, h, text) {
+function wmStyle(kind) {
+  if (kind === 'pink') {
+    var a = (S.design && HEX.test(S.design.accent || '')) ? S.design.accent : '#EBA4B7';
+    var r = parseInt(a.slice(1, 3), 16), g = parseInt(a.slice(3, 5), 16), b = parseInt(a.slice(5, 7), 16);
+    return { fill: 'rgba(' + r + ',' + g + ',' + b + ',.62)', stroke: 'rgba(' + Math.round(r * .62) + ',' + Math.round(g * .62) + ',' + Math.round(b * .62) + ',.16)' };
+  }
+  if (kind === 'gray') return { fill: 'rgba(238,234,236,.55)', stroke: 'rgba(90,80,86,.14)' };
+  return { fill: 'rgba(255,255,255,.55)', stroke: 'rgba(90,70,82,.12)' };
+}
+function drawWatermark(ctx, w, h, text, kind) {
   var fs = Math.max(12, Math.round(Math.max(w, h) / 40));
   ctx.save();
   ctx.font = '600 ' + fs + 'px "Hiragino Kaku Gothic ProN","Yu Gothic",Arial,sans-serif';
   ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
   ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, fs / 7);
-  ctx.strokeStyle = 'rgba(60,40,55,.28)'; ctx.fillStyle = 'rgba(255,255,255,.42)';
+  var st = wmStyle(kind); ctx.strokeStyle = st.stroke; ctx.fillStyle = st.fill;
   var tw = ctx.measureText(text).width, sx = tw + fs * 3, sy = fs * 4.6, dd = Math.ceil(Math.sqrt(w * w + h * h) / 2) + sx;
   ctx.translate(w / 2, h / 2); ctx.rotate(-Math.PI / 6);
   var row = 0;
@@ -168,7 +174,7 @@ async function compress(file, maxEdge, q, wm) {
   if (!wm && k === 1 && file.size < 1200 * 1024 && /^image\/(jpeg|webp|png)$/.test(file.type)) return { blob: file, w: w, h: h };
   var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
   var ctx = cv.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(bmp, 0, 0, w, h);
-  if (wm) drawWatermark(ctx, w, h, wm);
+  if (wm) drawWatermark(ctx, w, h, wm, wmKind());
   var blob = await new Promise(function (r) { cv.toBlob(r, 'image/webp', q); });
   if (!blob || blob.type !== 'image/webp') {
     ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
@@ -186,6 +192,7 @@ async function addImage(file, maxEdge, q, wm) {
   S.imgs[id] = { w: r.w, h: r.h, file: 'img-' + id + '.' + ext };
   return id;
 }
+function wmKind() { return (S.protect && S.protect.wmColor) || 'white'; }
 function wmText() { return (S.protect && S.protect.wm && S.protect.wmText) ? S.protect.wmText : ''; }
 async function getBlob(id) {
   if (blobs[id]) return blobs[id].blob;
@@ -258,7 +265,7 @@ function panelWorks() {
   if (!S.categories.some(function (c) { return c.id === addCat; })) addCat = S.categories.length ? S.categories[S.categories.length - 1].id : '';
   if (addPlan && !S.plans.some(function (c) { return c.id === addPlan; })) addPlan = '';
   if (addStyle && !S.styles.some(function (c) { return c.id === addStyle; })) addStyle = '';
-  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。ここで選んだカテゴリー・プラン・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
+  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。新しく追加した作品は、作品一覧の先頭（いちばん上）に入ります。ここで選んだカテゴリー・プラン・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
     '<div class="row"><label class="f" style="margin:0;min-width:140px"><span>カテゴリー</span><select class="f-in" id="add-cat">' + catOptions(addCat) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:140px"><span>プラン</span><select class="f-in" id="add-plan">' + planOptions(addPlan) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:110px"><span>制作した年</span><select class="f-in" id="add-year">' + yearOptions(addYear) + '</select></label>' +
@@ -285,7 +292,8 @@ function panelWorks() {
     '<label class="chk"><input type="checkbox" data-path="protect.noSave"' + (S.protect.noSave ? ' checked' : '') + '>右クリック・長押し・ドラッグでの画像保存をできなくする</label>' +
     '<label class="chk"><input type="checkbox" data-path="protect.wm"' + (S.protect.wm ? ' checked' : '') + '>作品の画像に透かしを全体に敷き詰める</label>' +
     tin('protect.wmText', '透かしの文字') +
-    '<p class="ed-hint" style="margin-top:6px">透かしは、これから追加する作品、または「画像を差し替え」した作品に付きます（画像に焼き込みます）。すでに追加した作品には付かないので、入れ直してください。メイン画像とアイコンには付きません。外部のサービスやAIには送りません。</p></section>';
+    field('透かしの色', '<select data-path="protect.wmColor">' + [['white', '白'], ['gray', '白に近いグレー'], ['pink', 'サイトのピンク（「デザイン」のアクセント色）']].map(function (o) { return '<option value="' + o[0] + '"' + (S.protect.wmColor === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') +
+    '<p class="ed-hint" style="margin-top:6px">透かしは、これから追加する作品、または「画像を差し替え」した作品に付きます。色を変えたときも同じです（画像に焼き込みます）。すでに追加した作品には付かないので、入れ直してください。メイン画像とアイコンには付きません。外部のサービスやAIには送りません。</p></section>';
   h += '<section class="ed-card"><h2>並び順</h2><p class="ed-hint">公開ページでの作品の並び方です。「新しい順」「古い順」は、作品に付けた制作年をもとにします。同じ年の作品は、下の作品一覧の並びのままです。年を付けていない作品は最後になります。</p>' +
     field('最初に表示する並び順', '<select data-path="sort">' + [['manual', 'おすすめ順（作品一覧の並びのまま）'], ['new', '新しい順'], ['old', '古い順']].map(function (o) { return '<option value="' + o[0] + '"' + (S.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') +
     '<label class="chk"><input type="checkbox" data-path="showSort"' + (S.showSort ? ' checked' : '') + '>訪問者が並び順を切り替えられるようにする（制作年が2種類以上あるときに表示）</label></section>';
@@ -383,7 +391,7 @@ async function handleFiles(kind, files, id, input) {
         setBusy('作品を読み込み中… (' + (i + 1) + '/' + arr.length + ')');
         try {
           var iid = await addImage(arr[i], 2000, 0.88, wmText());
-          S.works.push({ id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan }); okN++; touch();
+          S.works.splice(okN, 0, { id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan }); okN++; touch();
         } catch (e) { toast('「' + arr[i].name + '」を追加できませんでした。' + why(e), true); }
       }
       if (okN) toast(okN + '枚の作品を追加しました');
