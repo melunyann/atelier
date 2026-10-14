@@ -44,13 +44,14 @@ function defaultState() {
       footer: '© 2026 melune',
       filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', yearSuffix: '年',
       noMatchText: 'この条件に合う作品は、まだありません。',
-      sortLabel: '並び順', sortManual: 'おすすめ順', sortNew: '新しい順', sortOld: '古い順'
+      sortLabel: '並び順', sortManual: 'おすすめ順', sortNew: '新しい順', sortOld: '古い順',
+      moreLabel: '絞り込み', clearLabel: '選択を解除'
     },
     activities: ['美少女イラスト制作', 'キャラクターデザイン', '創作キャラクターのビジュアル制作', 'イラストコミッション'],
     links: [],
     categories: [{ id: 'commission', name: 'ご依頼作品' }, { id: 'original', name: '自主制作' }],
     styles: [],
-    sort: 'manual', showSort: true,
+    sort: 'manual', showSort: true, defaultCat: 'commission',
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
     heroId: null, iconId: null, imgs: {}, works: []
   };
@@ -73,6 +74,8 @@ function normalizeState(raw) {
   }
   s.sort = ['manual', 'new', 'old'].indexOf(raw.sort) >= 0 ? raw.sort : 'manual';
   s.showSort = raw.showSort !== false;
+  var dc = typeof raw.defaultCat === 'string' ? raw.defaultCat : 'commission';
+  s.defaultCat = (dc === 'all' || s.categories.some(function (c) { return c.id === dc; })) ? dc : 'all';
   s.heroId = raw.heroId ? String(raw.heroId) : null;
   s.iconId = raw.iconId ? String(raw.iconId) : null;
   s.imgs = {};
@@ -109,6 +112,12 @@ function srcOf(S, id) {
   return (m && m.file) ? 'images/' + encodeURIComponent(m.file) : '';
 }
 
+function startCat(S) {
+  var c = S.defaultCat;
+  if (c === 'all' || !S.categories.some(function (x) { return x.id === c; })) return 'all';
+  return S.works.some(function (w) { return w.cat === c; }) ? c : 'all';
+}
+
 function filterGroups(S) {
   var T = S.texts, groups = [];
   if (S.categories.length) groups.push({ g: 'cat', label: T.filterLabelCat, items: S.categories.map(function (c) { return { id: c.id, name: c.name }; }) });
@@ -140,14 +149,23 @@ function siteHTML(S) {
   if (links.length) h += '<div class="links">' + links.map(function (l) { return '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(l.label || l.url) + '</a>'; }).join('') + '</div>';
   h += '</section>';
   h += '<section class="gallery" id="gallery"><div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.galleryEn) + '</h2>' + (T.galleryJa ? '<p class="g-ja">' + esc(T.galleryJa) + '</p>' : '') + '</div>';
-  var groups = filterGroups(S), multi = groups.length > 1;
-  if (groups.length) {
-    h += '<div class="filters">' + groups.map(function (gr) {
-      var lab = multi && gr.label ? esc(gr.label) : '';
-      return '<div class="f-group" role="group"' + (lab ? ' aria-label="' + lab + '"' : '') + '>' + (lab ? '<span class="f-label">' + lab + '</span>' : '') +
-        (gr.g === 'sort' ? '' : '<button type="button" class="chip is-on" data-g="' + gr.g + '" data-f="all" aria-pressed="true">' + esc(T.filterAll) + '</button>') +
-        gr.items.map(function (it) { var on = gr.g === 'sort' && it.id === S.sort; return '<button type="button" class="chip' + (on ? ' is-on' : '') + '" data-g="' + gr.g + '" data-f="' + esc(it.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(it.name) + '</button>'; }).join('') + '</div>';
-    }).join('') + '</div>';
+  var groups = filterGroups(S), sc = startCat(S);
+  var catG = groups.filter(function (g) { return g.g === 'cat'; })[0], moreG = groups.filter(function (g) { return g.g !== 'cat'; });
+  if (catG || moreG.length) {
+    h += '<div class="filters"><div class="f-main">';
+    if (catG) {
+      h += '<button type="button" class="chip' + (sc === 'all' ? ' is-on' : '') + '" data-g="cat" data-f="all" aria-pressed="' + (sc === 'all') + '">' + esc(T.filterAll) + '</button>' +
+        catG.items.map(function (it) { var on = it.id === sc; return '<button type="button" class="chip' + (on ? ' is-on' : '') + '" data-g="cat" data-f="' + esc(it.id) + '" aria-pressed="' + on + '">' + esc(it.name) + '</button>'; }).join('');
+    }
+    if (moreG.length) h += '<button type="button" class="chip more" aria-expanded="false" aria-controls="f-more"><span class="plus" aria-hidden="true">+</span><span class="more-t">' + esc(T.moreLabel || '絞り込み') + '</span><span class="f-count" hidden></span></button>';
+    h += '</div>';
+    if (moreG.length) {
+      h += '<div class="f-more" id="f-more" hidden>' + moreG.map(function (gr) {
+        return '<div class="f-group" role="group" aria-label="' + esc(gr.label) + '"><span class="f-label">' + esc(gr.label) + '</span>' +
+          gr.items.map(function (it) { var on = gr.g === 'sort' && it.id === S.sort; return '<button type="button" class="chip' + (on ? ' is-on' : '') + '" data-g="' + gr.g + '" data-f="' + esc(it.id) + '" aria-pressed="' + on + '">' + esc(it.name) + '</button>'; }).join('') + '</div>';
+      }).join('') + '<button type="button" class="f-clear" hidden>' + esc(T.clearLabel || '選択を解除') + '</button></div>';
+    }
+    h += '</div>';
   } else h += '<div class="filters" hidden></div>';
   h += '<div class="cols"><div class="col"></div><div class="col"></div></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
   if (cta) h += '<section class="cta"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + '<a class="btn" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionButton || '詳しく見る') + '</a></div></section>';
@@ -170,7 +188,7 @@ function mountSite(root, S, src) {
   var cols = Array.prototype.slice.call(site.querySelectorAll('.col'));
   var empty = site.querySelector('.empty');
   var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
-  var nodes = {}, filter = { cat: 'all', year: 'all', style: 'all', sort: S.sort }, list = [], cur = -1, lastBtn = null, locked = false;
+  var nodes = {}, filter = { cat: startCat(S), year: [], style: [], sort: S.sort }, list = [], cur = -1, lastBtn = null, locked = false;
   function catName(id) { for (var i = 0; i < S.categories.length; i++) if (S.categories[i].id === id) return S.categories[i].name; return ''; }
   function styleName(id) { for (var i = 0; i < S.styles.length; i++) if (S.styles[i].id === id) return S.styles[i].name; return ''; }
   function node(w) {
@@ -182,7 +200,7 @@ function mountSite(root, S, src) {
     nodes[w.id] = n; return n;
   }
   function layout() {
-    list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (filter.year === 'all' || w.year === filter.year) && (filter.style === 'all' || w.style === filter.style); });
+    list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (!filter.year.length || filter.year.indexOf(w.year) >= 0) && (!filter.style.length || filter.style.indexOf(w.style) >= 0); });
     cols.forEach(function (c) { while (c.firstChild) c.removeChild(c.firstChild); });
     var hs = [0, 0];
     function put(el, r) { var k = hs[0] <= hs[1] ? 0 : 1; cols[k].appendChild(el); hs[k] += r; }
@@ -232,12 +250,33 @@ function mountSite(root, S, src) {
     if (lastBtn && lastBtn.focus) lastBtn.focus();
   }
   site.querySelector('.cols').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.work') : null; if (b) openM(b); });
-  Array.prototype.forEach.call(site.querySelectorAll('.chip'), function (b) {
+  var moreBtn = site.querySelector('.chip.more'), morePanel = site.querySelector('.f-more'), countEl = site.querySelector('.f-count'), clearBtn = site.querySelector('.f-clear');
+  function syncMore() {
+    var n = filter.year.length + filter.style.length;
+    if (countEl) { countEl.textContent = n; countEl.hidden = !n; }
+    if (clearBtn) clearBtn.hidden = !n;
+  }
+  if (moreBtn) moreBtn.addEventListener('click', function () {
+    var open = morePanel.hidden;
+    morePanel.hidden = !open; moreBtn.classList.toggle('is-open', open); moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  if (clearBtn) clearBtn.addEventListener('click', function () {
+    filter.year = []; filter.style = [];
+    Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g="year"],.chip[data-g="style"]'), function (x) { x.classList.remove('is-on'); x.setAttribute('aria-pressed', 'false'); });
+    syncMore(); layout();
+  });
+  Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g]'), function (b) {
     b.addEventListener('click', function () {
-      var g = b.getAttribute('data-g');
-      filter[g] = b.getAttribute('data-f');
-      Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g="' + g + '"]'), function (x) { var on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-      layout();
+      var g = b.getAttribute('data-g'), v = b.getAttribute('data-f');
+      if (g === 'year' || g === 'style') {
+        var arr = filter[g], k = arr.indexOf(v), on = k < 0;
+        if (on) arr.push(v); else arr.splice(k, 1);
+        b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      } else {
+        filter[g] = v;
+        Array.prototype.forEach.call(site.querySelectorAll('.chip[data-g="' + g + '"]'), function (x) { var on2 = x === b; x.classList.toggle('is-on', on2); x.setAttribute('aria-pressed', on2 ? 'true' : 'false'); });
+      }
+      syncMore(); layout();
     });
   });
   modal.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-close]')) closeM(); });
