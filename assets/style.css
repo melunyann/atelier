@@ -133,3 +133,7 @@ img{max-width:100%}
   .site .m-card{border-radius:16px}
 }
 @media (prefers-reduced-motion:reduce){.site *{transition:none!important}}
+
+/* image protection (optional) */
+.site.nosave img{-webkit-user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.site.nosave .work>img,.site.nosave .m-img img,.site.nosave .hero>img,.site.nosave .icon{pointer-events:none}
