@@ -1,3 +1,4 @@
+/* melune portfolio — site styles */
 html,body{margin:0;padding:0}
 body{background:#FFF9F8;color-scheme:light}
 img{max-width:100%}
@@ -194,3 +195,23 @@ html{scroll-behavior:auto}
 .site .work .cap .no{display:block;font-family:var(--f-body);font-size:.66rem;letter-spacing:.18em;opacity:.92}
 @media (max-width:600px){.site .s-in{font-size:16px}}
 .site .strip{margin-top:26px}
+
+/* commission page */
+.site .cm{max-width:760px}
+.site .cm-intro{max-width:34em;margin:22px auto 0;text-align:center;color:var(--ink-2);white-space:pre-line;text-wrap:pretty;overflow-wrap:anywhere}
+.site .cm-sec{margin-top:clamp(36px,7vw,56px)}
+.site .g-en.sm{font-size:clamp(1.2rem,1.05rem + .6vw,1.5rem)}
+.site .cm-plans{display:flex;flex-direction:column;gap:clamp(16px,3vw,24px);margin-top:20px}
+.site .cm-plan{background:var(--tint);border-radius:28px;padding:clamp(18px,5vw,34px);display:flex;flex-direction:column;gap:16px}
+.site .cm-ph{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+.site .cm-pn{font-family:var(--f-head);font-weight:var(--fw-head);font-size:clamp(1.15rem,1rem + .6vw,1.45rem);letter-spacing:.14em;line-height:1.5}
+.site .cm-price{font-size:15px;letter-spacing:.1em;background:var(--accent);color:var(--ink);padding:2px 16px;border-radius:999px;line-height:1.8}
+.site .cm-desc,.site .cm-body{white-space:pre-line;color:var(--ink-2);text-wrap:pretty;overflow-wrap:anywhere}
+.site .cm-imgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap);align-items:start}
+.site .cm-imgs.one{grid-template-columns:minmax(0,1fr);max-width:620px;margin:0 auto;width:100%}
+.site .cm-plan.is-image .cm-imgs.one{max-width:none}
+.site .cm-imgs .work .cap{display:none}
+.site .cm-block{margin-top:clamp(36px,7vw,56px)}
+.site .cm-h{font-family:var(--f-head);font-weight:var(--fw-head);font-size:clamp(1.15rem,1rem + .6vw,1.4rem);letter-spacing:.14em;line-height:1.5;padding-bottom:8px;border-bottom:2px solid var(--accent);margin-bottom:14px}
+.site .cm-block .cm-imgs{margin-top:16px}
+.site .cm-apply{margin-top:clamp(36px,7vw,56px)}
