@@ -12,9 +12,9 @@ window.SITE_DATA = {
     "emptyText": "作品は準備中です。もうすこしだけお待ちください。",
     "closeLabel": "閉じる",
     "commissionEn": "Commission",
-    "commissionBody": "イラストのご依頼を受け付けています。\nお見積りのみでもお気軽にご相談ください。\n描き込み一枚絵・立ち絵のご相談は、納期に余裕を持ってご相談いただきますようお願いいたします。\n\n受付先\n・X DM、メール\n・つなぐ、ココナラ　\n・Art Link（以下のボタン）\n\n※サイト経由でのご依頼は、金額が異なる場合がございます\n※お支払方法は各サイトに準じます\n※サイト経由でないご依頼のお支払いは、銀行振込またはPayPay決済のみの対応となります\n※meluneはPayPay加盟店です\n\n受付状況やプランなどの細かな内容は、以下のボタンよりご確認をお願いいたします。",
+    "commissionBody": "イラストのご依頼を受け付けています。\nお見積りのみでもお気軽にご相談ください。\n描き込み一枚絵・立ち絵のご相談は、納期に余裕を持ってご相談いただきますようお願いいたします。\n\n受付先\n・X DM、メール\n・つなぐ、ココナラ　\n・Art Link（以下のボタン）\n\n受付状況やプランなどの細かな内容は、以下のボタンよりご確認をお願いいたします。",
     "commissionButton": "ご依頼について",
-    "commissionUrl": "https://goartlink.com/artists/melunyann",
+    "commissionUrl": "",
     "footer": "© 2026 melune",
     "filterLabelCat": "カテゴリー",
     "filterLabelYear": "年",
@@ -31,6 +31,11 @@ window.SITE_DATA = {
     "menuHome": "Home",
     "menuGallery": "Gallery",
     "menuCommission": "Commission",
+    "commissionJa": "ご依頼について",
+    "commissionPlanEn": "Plan",
+    "commissionPlanJa": "プラン",
+    "commissionApply": "ご依頼・お問い合わせ",
+    "commissionEmpty": "ご依頼ページは準備中です。もうすこしだけお待ちください。",
     "viewAllLabel": "もっと見る",
     "searchPlaceholder": "タイトル・番号・キーワードで検索",
     "resultSuffix": "件"
@@ -79,6 +84,24 @@ window.SITE_DATA = {
   "sort": "new",
   "showSort": true,
   "defaultCat": "commission",
+  "commission": {
+    "intro": "",
+    "plans": [],
+    "blocks": [
+      {
+        "id": "dvkeeafikr8d",
+        "title": "ご依頼の流れ",
+        "body": "メッセージにてご依頼内容をご連絡\n",
+        "imgs": []
+      },
+      {
+        "id": "yk08eh2vls4q",
+        "title": "お支払い方法",
+        "body": "銀行振込（原則活動者様のみ）\nPayPay　※加盟店登録済\n\n【サイト経由のみ】\n銀行振込、クレジットカード、コンビニ決済、キャリア決済、PayPal、Apple Pay、Google Pay、請求書払い\n\n※コミッションをお受けしているサイトにて対応している決済方法をまとめて記載しております。\n※サイト経由はつなぐ、ココナラ、Art linkのみお受けしております。\n※お支払い、お振込の際に発生する手数料はご依頼者様負担にてお願いいたします。\n※全て先払いとなります。ご不安な方はサイト経由をご検討ください。",
+        "imgs": []
+      }
+    ]
+  },
   "showMenu": true,
   "topCat": "commission",
   "topCount": 6,
