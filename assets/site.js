@@ -45,7 +45,9 @@ function defaultState() {
       filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', filterLabelPlan: 'プラン', yearSuffix: '年',
       noMatchText: 'この条件に合う作品は、まだありません。',
       sortLabel: '並び順', sortManual: 'おすすめ順', sortNew: '新しい順', sortOld: '古い順',
-      moreLabel: '絞り込み', clearLabel: '選択を解除'
+      moreLabel: '絞り込み', clearLabel: '選択を解除',
+      menuHome: 'Home', menuGallery: 'Gallery', menuCommission: 'Commission',
+      viewAllLabel: 'もっと見る', searchPlaceholder: 'タイトル・番号・キーワードで検索', resultSuffix: '件'
     },
     activities: ['美少女イラスト制作', 'キャラクターデザイン', '創作キャラクターのビジュアル制作', 'イラストコミッション'],
     links: [],
@@ -53,6 +55,7 @@ function defaultState() {
     styles: [],
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'manual', showSort: true, defaultCat: 'commission',
+    showMenu: true, topCat: 'commission', topCount: 6,
     protect: { noSave: true, wm: true, wmText: 'melune sample', wmColor: 'white' },
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
     heroId: null, iconId: null, imgs: {}, works: []
@@ -85,6 +88,10 @@ function normalizeState(raw) {
     if (['white', 'gray', 'pink'].indexOf(raw.protect.wmColor) >= 0) s.protect.wmColor = raw.protect.wmColor;
     if (typeof raw.protect.wmText === 'string') s.protect.wmText = raw.protect.wmText.slice(0, 40);
   }
+  s.showMenu = raw.showMenu !== false;
+  var tc = typeof raw.topCat === 'string' ? raw.topCat : 'commission';
+  s.topCat = (tc === 'all' || s.categories.some(function (c) { return c.id === tc; })) ? tc : 'all';
+  s.topCount = Math.max(1, Math.min(12, parseInt(raw.topCount, 10) || 6));
   s.heroId = raw.heroId ? String(raw.heroId) : null;
   s.iconId = raw.iconId ? String(raw.iconId) : null;
   s.imgs = {};
@@ -93,7 +100,7 @@ function normalizeState(raw) {
     if (m && typeof m === 'object') s.imgs[k] = { w: +m.w || 0, h: +m.h || 0, file: String(m.file || '') };
   });
   s.works = Array.isArray(raw.works) ? raw.works.filter(function (w) { return w && w.id && w.imgId; }).map(function (w) {
-    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || '') };
+    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || ''), no: String(w.no || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16) };
   }) : [];
   return s;
 }
@@ -118,13 +125,19 @@ function srcOf(S, id) {
   var ov = window.SITE_PREVIEW && window.SITE_PREVIEW.urls;
   if (ov && ov[id]) return ov[id];
   var m = S.imgs && S.imgs[id];
-  return (m && m.file) ? 'images/' + encodeURIComponent(m.file) : '';
+  return (m && m.file) ? (window.SITE_BASE || '') + 'images/' + encodeURIComponent(m.file) : '';
 }
 
 function startCat(S) {
   var c = S.defaultCat;
   if (c === 'all' || !S.categories.some(function (x) { return x.id === c; })) return 'all';
   return S.works.some(function (w) { return w.cat === c; }) ? c : 'all';
+}
+
+function topList(S) {
+  var c = S.topCat, pool = (c === 'all' || !S.categories.some(function (x) { return x.id === c; })) ? S.works : S.works.filter(function (w) { return w.cat === c; });
+  if (!pool.length) pool = S.works;
+  return pool.slice(0, Math.max(1, Math.min(12, parseInt(S.topCount, 10) || 6)));
 }
 
 function filterGroups(S) {
@@ -144,12 +157,29 @@ function filterGroups(S) {
   return groups;
 }
 
-function siteHTML(S) {
+function siteHTML(S, page) {
+  page = page === 'gallery' ? 'gallery' : 'home';
   var T = S.texts, name = T.siteName || '';
   var links = S.links.filter(function (l) { return safeUrl(l.url); });
   var tags = S.activities.filter(function (a) { return a && a.trim(); });
   var cta = safeUrl(T.commissionUrl);
-  var h = '<div class="site" style="' + esc(siteVars(S)) + '">';
+  var h = '<div class="site" id="top" style="' + esc(siteVars(S)) + '">';
+  if (S.showMenu) {
+    var home = page === 'home';
+    var lh = T.menuHome || 'Home', lg = T.menuGallery || 'Gallery', lc = T.menuCommission || 'Commission';
+    var items = [
+      home ? { l: lh, to: 'top' } : { l: lh, href: '../index.html', page: 'home' },
+      home ? { l: lg, href: 'gallery/index.html', page: 'gallery' } : { l: lg, to: 'top' },
+      !cta ? { l: lc, soon: true } : home ? { l: lc, to: 'commission' } : { l: lc, href: '../index.html#commission', page: 'home', hash: 'commission' }
+    ];
+    h += '<button type="button" class="mb" aria-expanded="false" aria-controls="mn" aria-label="メニューを開く"><span class="mb-l" aria-hidden="true"></span><span class="mb-l" aria-hidden="true"></span><span class="mb-l" aria-hidden="true"></span></button>';
+    h += '<nav class="mn" id="mn" hidden aria-label="メニュー"><div class="mn-back" data-mclose></div><div class="mn-in"><div class="orn" aria-hidden="true">' + BOW + '</div><ul class="mn-list">' +
+      items.map(function (it) {
+        if (it.soon) return '<li><span class="mn-i is-soon" aria-disabled="true">' + esc(it.l) + '<small>準備中</small></span></li>';
+        return '<li><a class="mn-i" href="' + (it.href || '#' + it.to) + '"' + (it.to ? ' data-to="' + it.to + '"' : '') + (it.page ? ' data-page="' + it.page + '"' + (it.hash ? ' data-hash="' + it.hash + '"' : '') : '') + '>' + esc(it.l) + '</a></li>';
+      }).join('') + '</ul></div></nav>';
+  }
+  if (page === 'home') {
   h += '<div class="hero">' + (S.heroId ? '<img data-img="' + esc(S.heroId) + '" alt="' + esc(name) + 'のメインビジュアル">' : '<div class="hero-ph" aria-hidden="true">' + petals(PT_HERO) + '</div>') + '</div>';
   h += '<section class="profile"><div class="petals" aria-hidden="true">' + petals(PT_PROFILE) + '</div><div class="icon-wrap">';
   h += S.iconId ? '<img class="icon" data-img="' + esc(S.iconId) + '" alt="' + esc(name) + 'のアイコン">' : '<div class="icon icon-ph" aria-hidden="true">' + esc(Array.from(name)[0] || '') + '</div>';
@@ -160,7 +190,14 @@ function siteHTML(S) {
   if (tags.length) h += '<ul class="tags">' + tags.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>';
   if (links.length) h += '<div class="links">' + links.map(function (l) { return '<a href="' + esc(safeUrl(l.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(l.label || l.url) + '</a>'; }).join('') + '</div>';
   h += '</section>';
-  h += '<section class="gallery" id="gallery"><div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.galleryEn) + '</h2>' + (T.galleryJa ? '<p class="g-ja">' + esc(T.galleryJa) + '</p>' : '') + '</div>';
+  } else h += '<header class="gh"><a class="gh-name" href="../index.html" data-page="home">' + esc(name) + '</a></header>';
+  var gHead = '<div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.galleryEn) + '</h2>' + (T.galleryJa ? '<p class="g-ja">' + esc(T.galleryJa) + '</p>' : '') + '</div>';
+  if (page === 'home') {
+    h += '<section class="gallery" id="gallery">' + gHead + '<div class="strip"></div><p class="empty" hidden>' + esc(T.emptyText) + '</p>' +
+      (S.works.length ? '<div class="more-wrap"><a class="btn" href="gallery/index.html" data-page="gallery">' + esc(T.viewAllLabel || 'もっと見る') + '</a></div>' : '') + '</section>';
+  } else {
+    h += '<section class="gallery gp" id="gallery">' + gHead;
+    h += '<div class="search"><svg class="s-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="5.6"/><path d="M13.3 13.3 17 17"/></svg><input type="search" class="s-in" placeholder="' + esc(T.searchPlaceholder || '') + '" aria-label="' + esc(T.searchPlaceholder || '作品を検索') + '" autocomplete="off" enterkeyhint="search"><button type="button" class="s-x" hidden aria-label="入力を消す">&times;</button></div>';
   var groups = filterGroups(S), sc = startCat(S);
   var catG = groups.filter(function (g) { return g.g === 'cat'; })[0], moreG = groups.filter(function (g) { return g.g !== 'cat'; });
   if (catG || moreG.length) {
@@ -179,24 +216,58 @@ function siteHTML(S) {
     }
     h += '</div>';
   } else h += '<div class="filters" hidden></div>';
-  h += '<div class="cols"><div class="col"></div><div class="col"></div></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
-  if (cta) h += '<section class="cta"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + '<a class="btn" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionButton || '詳しく見る') + '</a></div></section>';
+    h += '<p class="f-result" aria-live="polite" hidden></p><div class="cols"><div class="col"></div><div class="col"></div></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
+  }
+  if (cta && page === 'home') h += '<section class="cta" id="commission"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + '<a class="btn" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionButton || '詳しく見る') + '</a></div></section>';
   h += '<footer class="foot"><span class="copy">' + esc(T.footer) + '</span></footer>';
   h += '<div class="modal" hidden role="dialog" aria-modal="true" aria-label="作品の拡大表示"><div class="m-back" data-close></div>' +
     '<figure class="m-card"><button type="button" class="m-x" data-close aria-label="' + esc(T.closeLabel || '閉じる') + '">&times;</button>' +
-    '<div class="m-img"><img alt=""></div><figcaption class="m-cap"><div class="m-meta"></div><h3 class="m-title"></h3><p class="m-desc"></p></figcaption></figure>' +
+    '<div class="m-img"><img alt=""></div><figcaption class="m-cap"><div class="m-no" hidden></div><div class="m-meta"></div><h3 class="m-title"></h3><p class="m-desc"></p></figcaption></figure>' +
     '<button type="button" class="m-nav prev" aria-label="前の作品">&#8249;</button><button type="button" class="m-nav next" aria-label="次の作品">&#8250;</button></div>';
   h += '</div>';
   return h;
 }
 
-function mountSite(root, S, src) {
+function mountSite(root, S, src, opts) {
+  var page = opts && opts.page === 'gallery' ? 'gallery' : 'home';
   var doc = root.ownerDocument;
-  root.innerHTML = siteHTML(S);
+  root.innerHTML = siteHTML(S, page);
   Array.prototype.forEach.call(root.querySelectorAll('img[data-img]'), function (im) {
     var s = src(im.getAttribute('data-img')); if (s) im.src = s; else im.hidden = true;
   });
   var site = root.querySelector('.site');
+  var mbtn = site.querySelector('.mb'), mnav = site.querySelector('.mn');
+  if (mbtn && mnav) {
+    var mLocked = false, mTimer = 0, reduce = !!(root.ownerDocument.defaultView && root.ownerDocument.defaultView.matchMedia && root.ownerDocument.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var openMenu = function () {
+      clearTimeout(mTimer);
+      mnav.hidden = false; mbtn.classList.add('is-open'); mbtn.setAttribute('aria-expanded', 'true'); mbtn.setAttribute('aria-label', 'メニューを閉じる');
+      mLocked = true; root.ownerDocument.documentElement.style.overflow = 'hidden';
+      (root.ownerDocument.defaultView.requestAnimationFrame || setTimeout)(function () { mnav.classList.add('is-show'); });
+      var first = mnav.querySelector('a.mn-i'); if (first) first.focus();
+    };
+    var closeMenu = function (back) {
+      if (mnav.hidden) return;
+      mnav.classList.remove('is-show'); mbtn.classList.remove('is-open'); mbtn.setAttribute('aria-expanded', 'false'); mbtn.setAttribute('aria-label', 'メニューを開く');
+      if (mLocked) { root.ownerDocument.documentElement.style.overflow = ''; mLocked = false; }
+      mTimer = setTimeout(function () { mnav.hidden = true; }, reduce ? 0 : 240);
+      if (back) mbtn.focus();
+    };
+    mbtn.addEventListener('click', function () { if (mnav.hidden) openMenu(); else closeMenu(true); });
+    mnav.addEventListener('click', function (e) {
+      var t = e.target; if (!t || !t.closest) return;
+      var a = t.closest('a[data-to]');
+      if (a) {
+        e.preventDefault();
+        var to = a.getAttribute('data-to'), el = to === 'top' ? null : site.querySelector('#' + to);
+        closeMenu(false);
+        var beh = reduce ? 'auto' : 'smooth';
+        if (to === 'top') { var w = root.ownerDocument.defaultView; if (w) w.scrollTo({ top: 0, behavior: beh }); }
+        else if (el && el.scrollIntoView) el.scrollIntoView({ behavior: beh, block: 'start' });
+      } else if (t.closest('[data-mclose]')) closeMenu(true);
+    });
+    root.ownerDocument.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !mnav.hidden) closeMenu(true); });
+  }
   if (S.protect && S.protect.noSave) {
     site.classList.add('nosave');
     Array.prototype.forEach.call(site.querySelectorAll('img'), function (im) { im.draggable = false; });
@@ -207,19 +278,47 @@ function mountSite(root, S, src) {
   var empty = site.querySelector('.empty');
   var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
   var nodes = {}, filter = { cat: startCat(S), plan: [], year: [], style: [], sort: S.sort }, list = [], cur = -1, lastBtn = null, locked = false;
+  var query = '', hay = {}, strip = site.querySelector('.strip'), qIn = site.querySelector('.s-in'), qX = site.querySelector('.s-x'), resEl = site.querySelector('.f-result');
+  function norm(s) { var t = String(s == null ? '' : s); try { t = t.normalize('NFKC'); } catch (e) { } return t.toLowerCase(); }
+  function hayOf(w) {
+    if (!hay[w.id]) hay[w.id] = norm([w.no, w.title, w.desc, catName(w.cat), planName(w.plan), styleName(w.style), w.year, w.year ? w.year + (S.texts.yearSuffix || '') : ''].join(' '));
+    return hay[w.id];
+  }
+  function matchQ(w) {
+    var q = norm(query).trim(); if (!q) return true;
+    var hs = hayOf(w), ts = q.split(/\s+/);
+    for (var i = 0; i < ts.length; i++) if (hs.indexOf(ts[i]) < 0) return false;
+    return true;
+  }
   function catName(id) { for (var i = 0; i < S.categories.length; i++) if (S.categories[i].id === id) return S.categories[i].name; return ''; }
   function planName(id) { for (var i = 0; i < S.plans.length; i++) if (S.plans[i].id === id) return S.plans[i].name; return ''; }
   function styleName(id) { for (var i = 0; i < S.styles.length; i++) if (S.styles[i].id === id) return S.styles[i].name; return ''; }
   function node(w) {
     if (nodes[w.id]) return nodes[w.id];
     var n = doc.createElement('button'); n.type = 'button'; n.className = 'work'; n.setAttribute('data-id', w.id);
-    n.setAttribute('aria-label', (w.title || '作品') + 'を拡大して見る');
-    var im = doc.createElement('img'); im.alt = w.title || ''; im.src = src(w.imgId) || ''; n.appendChild(im);
-    if (w.title) { var c = doc.createElement('span'); c.className = 'cap'; c.textContent = w.title; n.appendChild(c); }
+    n.setAttribute('aria-label', (w.title || w.no || '作品') + 'を拡大して見る');
+    var im = doc.createElement('img'); im.alt = w.title || ''; im.src = src(w.imgId) || '';
+    var mt0 = S.imgs && S.imgs[w.imgId]; if (mt0 && mt0.w && mt0.h) { im.style.aspectRatio = mt0.w + '/' + mt0.h; n.style.setProperty('--r', String(mt0.w / mt0.h)); }
+    n.appendChild(im);
+    if (w.title || w.no) {
+      var c = doc.createElement('span'); c.className = 'cap';
+      if (w.no) { var cn = doc.createElement('span'); cn.className = 'no'; cn.textContent = w.no; c.appendChild(cn); }
+      if (w.title) { var ct = doc.createElement('span'); ct.className = 't'; ct.textContent = w.title; c.appendChild(ct); }
+      n.appendChild(c);
+    }
     nodes[w.id] = n; return n;
   }
+  function layoutHome() {
+    strip.innerHTML = '';
+    if (!S.works.length) {
+      for (var i = 0; i < 6; i++) { var d = doc.createElement('div'); d.className = 'ph'; d.setAttribute('aria-hidden', 'true'); d.style.aspectRatio = String(1 / PH_RATIOS[i % PH_RATIOS.length]); d.style.setProperty('--r', String(1 / PH_RATIOS[i % PH_RATIOS.length])); d.innerHTML = '<span class="pt">' + PETAL + '</span>'; strip.appendChild(d); }
+      empty.hidden = false; list = []; return;
+    }
+    list = topList(S); list.forEach(function (w) { strip.appendChild(node(w)); }); empty.hidden = true;
+  }
   function layout() {
-    list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (!filter.plan.length || filter.plan.indexOf(w.plan) >= 0) && (!filter.year.length || filter.year.indexOf(w.year) >= 0) && (!filter.style.length || filter.style.indexOf(w.style) >= 0); });
+    if (page === 'home') { layoutHome(); return; }
+    list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (!filter.plan.length || filter.plan.indexOf(w.plan) >= 0) && (!filter.year.length || filter.year.indexOf(w.year) >= 0) && (!filter.style.length || filter.style.indexOf(w.style) >= 0) && matchQ(w); });
     cols.forEach(function (c) { while (c.firstChild) c.removeChild(c.firstChild); });
     var hs = [0, 0];
     function put(el, r) { var k = hs[0] <= hs[1] ? 0 : 1; cols[k].appendChild(el); hs[k] += r; }
@@ -241,6 +340,7 @@ function mountSite(root, S, src) {
       empty.textContent = S.texts.noMatchText || '';
       empty.hidden = list.length > 0;
     }
+    if (resEl) { resEl.hidden = !S.works.length; resEl.textContent = list.length + (S.texts.resultSuffix || ''); }
   }
   function show(i) {
     if (!list.length) return;
@@ -248,6 +348,7 @@ function mountSite(root, S, src) {
     var w = list[cur];
     mi.src = src(w.imgId) || ''; mi.alt = w.title || '';
     mt.textContent = w.title || ''; mt.hidden = !w.title;
+    var noEl = modal.querySelector('.m-no'); noEl.textContent = w.no ? 'No. ' + w.no : ''; noEl.hidden = !w.no;
     md.textContent = w.desc || ''; md.hidden = !w.desc;
     var metas = [catName(w.cat), planName(w.plan), w.year ? w.year + (S.texts.yearSuffix || '') : '', styleName(w.style)].filter(Boolean);
     mm.innerHTML = metas.map(function (t) { return '<span class="m-cat">' + esc(t) + '</span>'; }).join(''); mm.hidden = !metas.length;
@@ -268,7 +369,7 @@ function mountSite(root, S, src) {
     if (locked) { doc.documentElement.style.overflow = ''; locked = false; }
     if (lastBtn && lastBtn.focus) lastBtn.focus();
   }
-  site.querySelector('.cols').addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.work') : null; if (b) openM(b); });
+  (site.querySelector('.cols') || strip).addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.work') : null; if (b) openM(b); });
   var moreBtn = site.querySelector('.chip.more'), morePanel = site.querySelector('.f-more'), countEl = site.querySelector('.f-count'), clearBtn = site.querySelector('.f-clear');
   function syncMore() {
     var n = filter.plan.length + filter.year.length + filter.style.length;
@@ -298,6 +399,14 @@ function mountSite(root, S, src) {
       syncMore(); layout();
     });
   });
+  if (qIn) {
+    qIn.addEventListener('input', function () { query = qIn.value; if (qX) qX.hidden = !query; layout(); });
+    if (qX) qX.addEventListener('click', function () { qIn.value = ''; query = ''; qX.hidden = true; layout(); qIn.focus(); });
+  }
+  site.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-page]') : null, pv = window.SITE_PREVIEW;
+    if (a && pv && typeof pv.go === 'function') { e.preventDefault(); pv.go(a.getAttribute('data-page'), a.getAttribute('data-hash') || ''); }
+  });
   modal.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-close]')) closeM(); });
   modal.querySelector('.prev').addEventListener('click', function () { show(cur - 1); });
   modal.querySelector('.next').addEventListener('click', function () { show(cur + 1); });
@@ -321,10 +430,17 @@ window.MeluneSite = {
 /* ---- 公開ページの起動 ---- */
 var root = document.getElementById('melune-root');
 if (root) {
+  var PV = window.SITE_PREVIEW || null;
+  var pageName = (PV && PV.page) || root.getAttribute('data-page') || 'home';
+  window.SITE_BASE = root.getAttribute('data-base') || '';
   var S = normalizeState(window.SITE_DATA);
-  mountSite(root, S, function (id) { return srcOf(S, id); });
+  mountSite(root, S, function (id) { return srcOf(S, id); }, { page: pageName });
   try {
-    document.title = S.texts.siteName || 'melune';
+    var hh = ((PV && PV.hash) || (location.hash || '').replace('#', '')), he = hh ? document.getElementById(hh) : null;
+    if (he && he.scrollIntoView) he.scrollIntoView();
+  } catch (e) { }
+  try {
+    document.title = pageName === 'gallery' ? ((S.texts.galleryEn || 'Gallery') + ' | ' + (S.texts.siteName || 'melune')) : (S.texts.siteName || 'melune');
     document.body.style.background = col(S.design.bg, '#FFF9F8');
     var desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute('content', (S.texts.tagline ? S.texts.tagline + ' ' : '') + (S.texts.intro || ''));
