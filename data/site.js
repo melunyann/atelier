@@ -14,7 +14,7 @@ window.SITE_DATA = {
     "commissionEn": "Commission",
     "commissionBody": "イラストのご依頼を受け付けています。\nお見積りのみでもお気軽にご相談ください。\n描き込み一枚絵・立ち絵のご相談は、納期に余裕を持ってご相談いただきますようお願いいたします。\n\n受付先\n・X DM、メール\n・つなぐ、ココナラ　\n・Art Link（以下のボタン）\n\n受付状況やプランなどの細かな内容は、以下のボタンよりご確認をお願いいたします。",
     "commissionButton": "ご依頼について",
-    "commissionUrl": "",
+    "commissionUrl": "https://melunyann.github.io/atelier/commission/index.html",
     "footer": "© 2026 melune",
     "filterLabelCat": "カテゴリー",
     "filterLabelYear": "年",
