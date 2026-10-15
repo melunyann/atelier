@@ -70,7 +70,24 @@ window.SITE_DATA = {
       "name": "ご依頼作品"
     }
   ],
-  "styles": [],
+  "styles": [
+    {
+      "id": "p411n12p5pah",
+      "name": "簡易"
+    },
+    {
+      "id": "d8mzgfjh5v5u",
+      "name": "シンプル"
+    },
+    {
+      "id": "xizbontb5zoi",
+      "name": "通常①"
+    },
+    {
+      "id": "zfyr6ffd64zf",
+      "name": "通常②"
+    }
+  ],
   "plans": [
     {
       "id": "plan-icon",
@@ -79,6 +96,10 @@ window.SITE_DATA = {
     {
       "id": "plan-single",
       "name": "一枚絵"
+    },
+    {
+      "id": "mjfl5iye3auw",
+      "name": "セミオーダー立ち絵"
     }
   ],
   "sort": "new",
@@ -157,7 +178,200 @@ window.SITE_DATA = {
       "w": 2560,
       "h": 1440,
       "file": "img-de51tbmd7h77.webp"
+    },
+    "qjx8r0wv1und": {
+      "w": 1666,
+      "h": 2000,
+      "file": "img-qjx8r0wv1und.webp"
+    },
+    "1uup6bxi1xw5": {
+      "w": 1818,
+      "h": 2000,
+      "file": "img-1uup6bxi1xw5.webp"
+    },
+    "w1zvgtvw1zkw": {
+      "w": 2000,
+      "h": 1372,
+      "file": "img-w1zvgtvw1zkw.webp"
+    },
+    "gpuifkcn20zy": {
+      "w": 1818,
+      "h": 2000,
+      "file": "img-gpuifkcn20zy.webp"
+    },
+    "jpvubr3c2524": {
+      "w": 2000,
+      "h": 1438,
+      "file": "img-jpvubr3c2524.webp"
+    },
+    "py6vg3r626q9": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-py6vg3r626q9.webp"
+    },
+    "b4c8memn28i1": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-b4c8memn28i1.webp"
+    },
+    "23l0fnhe2ah4": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-23l0fnhe2ah4.webp"
+    },
+    "025cy7sh2cun": {
+      "w": 2000,
+      "h": 1370,
+      "file": "img-025cy7sh2cun.webp"
+    },
+    "kh4pcx072fc7": {
+      "w": 1773,
+      "h": 2000,
+      "file": "img-kh4pcx072fc7.webp"
+    },
+    "5qsnntfs2j3n": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-5qsnntfs2j3n.webp"
+    },
+    "umohgd0k2mgl": {
+      "w": 1853,
+      "h": 2000,
+      "file": "img-umohgd0k2mgl.webp"
     }
   },
-  "works": []
+  "works": [
+    {
+      "id": "b72venzx2mhp",
+      "imgId": "umohgd0k2mgl",
+      "title": "コンセプトカフェ オリジナル缶用イラスト",
+      "desc": "コンセプトカフェのイベントで使用されるオリジナル缶用のイラストを制作させていただきました。",
+      "cat": "commission",
+      "year": "2025",
+      "style": "",
+      "plan": "plan-single",
+      "no": "2025012"
+    },
+    {
+      "id": "z3gisrp62j3q",
+      "imgId": "5qsnntfs2j3n",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2025",
+      "style": "p411n12p5pah",
+      "plan": "",
+      "no": "2025011"
+    },
+    {
+      "id": "cez9ht6n2fda",
+      "imgId": "kh4pcx072fc7",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2025",
+      "style": "zfyr6ffd64zf",
+      "plan": "plan-single",
+      "no": "2025010"
+    },
+    {
+      "id": "ncj07pau2cuo",
+      "imgId": "025cy7sh2cun",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2025",
+      "style": "p411n12p5pah",
+      "plan": "",
+      "no": "2025009"
+    },
+    {
+      "id": "simlyon92ai8",
+      "imgId": "23l0fnhe2ah4",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2025",
+      "style": "",
+      "plan": "plan-single",
+      "no": "2025008"
+    },
+    {
+      "id": "70ljtcf828j5",
+      "imgId": "b4c8memn28i1",
+      "title": "プレゼント用イラスト②",
+      "desc": "リスナーの方からのご依頼",
+      "cat": "commission",
+      "year": "2025",
+      "style": "",
+      "plan": "",
+      "no": "2025007"
+    },
+    {
+      "id": "7kdaxqeg26rd",
+      "imgId": "py6vg3r626q9",
+      "title": "プレゼント用イラスト①",
+      "desc": "リスナーの方からのご依頼",
+      "cat": "commission",
+      "year": "2025",
+      "style": "",
+      "plan": "",
+      "no": "2025006"
+    },
+    {
+      "id": "jrnonl2b2538",
+      "imgId": "jpvubr3c2524",
+      "title": "応援広告用イラスト",
+      "desc": "リスナー有志の百合カヌラ様応援広告用イラストを制作させていただきました。",
+      "cat": "commission",
+      "year": "2025",
+      "style": "zfyr6ffd64zf",
+      "plan": "plan-single",
+      "no": "2025005"
+    },
+    {
+      "id": "eqndstt62111",
+      "imgId": "gpuifkcn20zy",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2025",
+      "style": "",
+      "plan": "",
+      "no": "2025004"
+    },
+    {
+      "id": "69gtebor1zm0",
+      "imgId": "w1zvgtvw1zkw",
+      "title": "セミオーダー",
+      "desc": "セミオーダー形式の立ち絵、キャラシート制作",
+      "cat": "commission",
+      "year": "2025",
+      "style": "xizbontb5zoi",
+      "plan": "mjfl5iye3auw",
+      "no": "2025003"
+    },
+    {
+      "id": "pmxyoysa1xx9",
+      "imgId": "1uup6bxi1xw5",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2025",
+      "style": "",
+      "plan": "",
+      "no": "2025002"
+    },
+    {
+      "id": "jhws9fhd1uoh",
+      "imgId": "qjx8r0wv1und",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2025",
+      "style": "p411n12p5pah",
+      "plan": "",
+      "no": "2025001"
+    }
+  ]
 };
