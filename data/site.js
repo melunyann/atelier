@@ -369,7 +369,7 @@ window.SITE_DATA = {
       "desc": "",
       "cat": "commission",
       "year": "2025",
-      "style": "p411n12p5pah",
+      "style": "",
       "plan": "",
       "no": "2025001"
     }
