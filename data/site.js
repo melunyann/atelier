@@ -27,7 +27,13 @@ window.SITE_DATA = {
     "sortNew": "新しい順",
     "sortOld": "古い順",
     "moreLabel": "絞り込み",
-    "clearLabel": "選択を解除"
+    "clearLabel": "選択を解除",
+    "menuHome": "Home",
+    "menuGallery": "Gallery",
+    "menuCommission": "Commission",
+    "viewAllLabel": "もっと見る",
+    "searchPlaceholder": "タイトル・番号・キーワードで検索",
+    "resultSuffix": "件"
   },
   "activities": [
     "キャラクターイラスト",
@@ -73,6 +79,9 @@ window.SITE_DATA = {
   "sort": "new",
   "showSort": true,
   "defaultCat": "commission",
+  "showMenu": true,
+  "topCat": "commission",
+  "topCount": 6,
   "protect": {
     "noSave": true,
     "wm": true,
@@ -121,7 +130,8 @@ window.SITE_DATA = {
       "cat": "commission",
       "year": "2026",
       "style": "",
-      "plan": ""
+      "plan": "",
+      "no": "2026002"
     },
     {
       "id": "ut26bdofl4oi",
@@ -131,7 +141,8 @@ window.SITE_DATA = {
       "cat": "",
       "year": "2026",
       "style": "",
-      "plan": ""
+      "plan": "",
+      "no": "2026001"
     }
   ]
 };
