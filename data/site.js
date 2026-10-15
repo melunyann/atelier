@@ -110,6 +110,16 @@ window.SITE_DATA = {
         "price": "5,500円～",
         "desc": "- 1名あたりの金額です\n- ラフ提出有\n- 非公開対応 +1,500円\n　フルサイズでの公開が不可能な全てのご依頼に適用されます\n- 商用利用 +3,000円～",
         "imgs": []
+      },
+      {
+        "id": "wm58js469eca",
+        "name": "",
+        "mode": "image",
+        "price": "",
+        "desc": "",
+        "imgs": [
+          "zt2234ps9k7y"
+        ]
       }
     ],
     "blocks": [
@@ -157,6 +167,11 @@ window.SITE_DATA = {
       "w": 2560,
       "h": 1440,
       "file": "img-de51tbmd7h77.webp"
+    },
+    "zt2234ps9k7y": {
+      "w": 2400,
+      "h": 2400,
+      "file": "img-zt2234ps9k7y.webp"
     }
   },
   "works": []
