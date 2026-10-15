@@ -1,3 +1,6 @@
+/* melune 編集ツール（自分のパソコンで使う専用ページ）
+   - 編集内容（下書き）は、このブラウザの中に自動で保存されます。
+   - 「サイトに反映」を押すと、公開サイトに入れるファイル一式（ZIP）を書き出します。 */
 (function () {
 'use strict';
 
@@ -14,7 +17,7 @@ var FONT_HREF = 'https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wg
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-
+/* ---------- ブラウザ内の保存（IndexedDB） ---------- */
 var idb = null;
 function openDB() {
   return new Promise(function (res) {
@@ -43,8 +46,8 @@ function dbPut(s, k, v) { return tx(s, 'readwrite', function (o) { return o.put(
 function dbDel(s, k) { return tx(s, 'readwrite', function (o) { return o.delete(k); }); }
 function dbKeys(s) { return tx(s, 'readonly', function (o) { return o.getAllKeys(); }); }
 
-
-  var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
+/* ---------- ZIP（圧縮なし）を作る ---------- */
+var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
 function crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
 function makeZip(files) {
   var enc = new TextEncoder(), parts = [], central = [], offset = 0, now = new Date();
@@ -70,12 +73,12 @@ function makeZip(files) {
   return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: 'application/zip' });
 }
 
-
+/* ---------- 状態 ---------- */
 var S = null, pubSig = '', saving = false, queued = false, dirty = false, saveErr = false, lastSaved = 0, timer = 0;
 var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', addPlan = '', armed = null, armTimer = 0, previewDoc = '', previewPage = 'home', previewHash = '', previewMode = 'pc', memOnly = false;
 var blobs = {};
 var baseState = null, gh = { repo: '', branch: '', dir: '', token: '' }, ghState = '';
-var TABS = [['profile', 'プロフィール'], ['works', '作品'], ['text', '文字'], ['design', 'デザイン'], ['publish', '公開'], ['github', '接続']];
+var TABS = [['profile', 'プロフィール'], ['works', '作品'], ['commission', 'ご依頼'], ['text', '文字'], ['design', 'デザイン'], ['publish', '公開'], ['github', '接続']];
 
 host.innerHTML =
   '<header class="ed-bar"><div class="ed-top"><div class="ed-brand">melune<small>編集ツール</small></div><div class="ed-status" id="ed-status" role="status"></div></div>' +
@@ -86,7 +89,7 @@ host.innerHTML =
 var elStatus = host.querySelector('#ed-status'), elTabs = host.querySelector('#ed-tabs'), elPanel = host.querySelector('#ed-panel'),
   elBusy = host.querySelector('#ed-busy'), elToast = host.querySelector('#ed-toast'), elOv = host.querySelector('#ed-ov');
 
-
+/* ---------- 小さな道具 ---------- */
 function fmtTime(t) { var d = new Date(t); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 function setBusy(t) { elBusy.textContent = t || ''; elBusy.hidden = !t; }
 var toastT = 0;
@@ -101,7 +104,7 @@ function arm(btn) {
   return false;
 }
 
-
+/* ---------- 保存 ---------- */
 function updateStatus() {
   if (!S) return;
   var diff = JSON.stringify(S) !== pubSig, h = '';
@@ -137,7 +140,7 @@ async function flush() {
 }
 document.addEventListener('visibilitychange', function () { if (document.hidden && dirty && S) saveDraft(); });
 
-
+/* ---------- 画像 ---------- */
 function blobToURL(b) { return URL.createObjectURL(b); }
 function wmStyle(kind) {
   if (kind === 'pink') {
@@ -219,7 +222,7 @@ async function gcImages() {
   } catch (e) { }
 }
 
-
+/* ---------- 画面（パネル） ---------- */
 function field(label, input, cls) { return '<label class="f' + (cls ? ' ' + cls : '') + '">' + label + input + '</label>'; }
 function tin(path, label, opt) {
   opt = opt || {}; var v = pathGet(S, path) || '';
@@ -331,6 +334,48 @@ function panelWorks() {
   });
   return h + '</section>';
 }
+function cmOwner(kind, id) { var arr = kind === 'plan' ? S.commission.plans : S.commission.blocks; return arr.filter(function (x) { return x.id === id; })[0]; }
+function cmThumbs(kind, o) {
+  if (!o.imgs.length) return '<p class="ed-hint" style="margin:6px 0">画像はまだありません。</p>';
+  return '<div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0">' + o.imgs.map(function (iid, j) {
+    var at = ' data-k="' + kind + '" data-id="' + o.id + '" data-i="' + j + '"';
+    return '<div style="width:92px"><div class="wk-thumb"><img data-load="' + esc(iid) + '" alt=""></div><div class="row" style="margin-top:4px;gap:2px;flex-wrap:nowrap">' +
+      '<button type="button" class="btn-s" data-act="cm-img-l"' + at + ' aria-label="前へ"' + (j === 0 ? ' disabled' : '') + '>←</button>' +
+      '<button type="button" class="btn-s" data-act="cm-img-r"' + at + ' aria-label="後ろへ"' + (j === o.imgs.length - 1 ? ' disabled' : '') + '>→</button>' +
+      '<button type="button" class="btn-d" data-act="cm-img-x"' + at + ' aria-label="画像を外す">×</button></div></div>';
+  }).join('') + '</div>';
+}
+function cmCtl(kind, o, i, n) {
+  return '<div class="row"><button type="button" class="btn-s" data-act="cm-' + kind + '-up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="cm-' + kind + '-down" data-i="' + i + '"' + (i === n - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
+    '<button type="button" class="btn-d" data-act="rm-cm-' + kind + '" data-id="' + o.id + '">削除</button></div>';
+}
+function panelCommission() {
+  var C = S.commission, box = 'border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:12px;background:#fff';
+  var h = '<section class="ed-card"><h2>ご依頼ページ</h2><p class="ed-hint">メニューの「Commission」から開く、ご依頼のページです。プランと、流れ・お支払い方法・注意事項などのブロックを入れると、メニューが「準備中」から開けるようになり、トップのご依頼セクションのボタンも、このページへ進みます。ご依頼・お問い合わせ先のURL（フォームなど）は、「文字」タブの「ご依頼セクション」に入れます。ページの下にボタンで出ます。</p>' +
+    tin('commission.intro', 'ページの説明文（いちばん上に出ます）', { area: 1, rows: 4 }) + '</section>';
+  h += '<section class="ed-card"><h2>プラン</h2><p class="ed-hint">プランごとに、「入力式」か「画像式」を選べます。入力式は、名前・料金・説明文・サンプル画像を入力します。画像式は、自分で作った料金表やプラン紹介の画像を、そのまま載せます（名前は空でもかまいません）。入力式のサンプル画像には、「作品」タブの透かしが付きます。画像式の画像には付きません。</p>';
+  C.plans.forEach(function (p, i) {
+    var inp = p.mode !== 'image';
+    h += '<article style="' + box + '"><div class="pair">' + field('プランの名前', '<input type="text" data-cp="' + p.id + '" data-k="name" value="' + esc(p.name) + '" placeholder="例：アイコンイラスト">') +
+      field('見せ方', '<select data-cp="' + p.id + '" data-k="mode"><option value="input"' + (inp ? ' selected' : '') + '>入力式（料金・説明文・サンプル画像）</option><option value="image"' + (!inp ? ' selected' : '') + '>画像式（作った画像をそのまま載せる）</option></select>') + '</div>' +
+      (inp ? field('料金', '<input type="text" data-cp="' + p.id + '" data-k="price" value="' + esc(p.price) + '" placeholder="例：3,000円〜">') +
+        field('説明文', '<textarea rows="4" data-cp="' + p.id + '" data-k="desc" placeholder="内容・納期・オプションなど">' + esc(p.desc) + '</textarea>') : '') +
+      '<div class="f"><span style="font-size:12px;color:var(--mute)">' + (inp ? 'サンプル画像（複数可）' : 'プランの画像（複数可。上から順に並びます）') + '</span>' + cmThumbs('plan', p) +
+      '<label class="btn-s">画像を追加<input type="file" accept="image/*" multiple hidden data-file="cm-plan" data-id="' + p.id + '"></label></div>' +
+      cmCtl('plan', p, i, C.plans.length) + '</article>';
+  });
+  h += '<div class="row"><button type="button" class="btn-s" data-act="add-cm-plan">プランを追加</button></div></section>';
+  h += '<section class="ed-card"><h2>ご依頼の流れ・お支払い方法・注意事項など</h2><p class="ed-hint">見出しと文章のブロックです。必要な数だけ追加できます。各ブロックに画像も付けられます（透かしは付きません）。プランのあとに、上から順に並びます。</p>';
+  C.blocks.forEach(function (b, i) {
+    h += '<article style="' + box + '">' + field('見出し', '<input type="text" data-cb="' + b.id + '" data-k="title" value="' + esc(b.title) + '" placeholder="例：ご依頼の流れ">') +
+      field('文章', '<textarea rows="6" data-cb="' + b.id + '" data-k="body" placeholder="改行はそのまま反映されます">' + esc(b.body) + '</textarea>') +
+      '<div class="f"><span style="font-size:12px;color:var(--mute)">画像（任意・複数可）</span>' + cmThumbs('block', b) +
+      '<label class="btn-s">画像を追加<input type="file" accept="image/*" multiple hidden data-file="cm-block" data-id="' + b.id + '"></label></div>' +
+      cmCtl('block', b, i, C.blocks.length) + '</article>';
+  });
+  h += '<div class="row" style="margin-top:12px">' + ['ご依頼の流れ', 'お支払い方法', '注意事項', ''].map(function (t) { return '<button type="button" class="btn-s" data-act="add-cm-block" data-t="' + t + '">' + (t ? '「' + t + '」を追加' : '空のブロックを追加') + '</button>'; }).join('') + '</div></section>';
+  return h;
+}
 function panelText() {
   var h = '<section class="ed-card"><h2>ギャラリーの文字</h2>' +
     '<div class="pair">' + tin('texts.galleryEn', '見出し（英字）') + tin('texts.galleryJa', '見出し（日本語）') + '</div>' +
@@ -346,7 +391,7 @@ function panelText() {
   h += '<section class="ed-card"><h2>メニュー（ハンバーガーメニュー）</h2><p class="ed-hint">公開ページの右上に出る「三」のボタンの中身です。「Gallery」は今のページのギャラリーへ、「Commission」は下のご依頼セクションへ移動します。ご依頼セクションのリンク先URLが空のあいだ、「Commission」は「準備中」と表示されます。</p>' +
     '<label class="chk"><input type="checkbox" data-path="showMenu"' + (S.showMenu ? ' checked' : '') + '>右上にメニューボタンを表示する</label>' +
     '<div class="pair">' + tin('texts.menuHome', '1番目の項目（ページの先頭へ）') + tin('texts.menuGallery', '2番目の項目（ギャラリーへ）') + '</div>' + tin('texts.menuCommission', '3番目の項目（ご依頼へ）') + '</section>';
-  h += '<section class="ed-card"><h2>ご依頼セクション</h2><p class="ed-hint">リンク先URLを入れると、ギャラリーの下にボタン付きで表示されます。空のときは表示されません。</p>' +
+  h += '<section class="ed-card"><h2>ご依頼セクション</h2><p class="ed-hint">トップのギャラリーの下に出るご依頼の案内です。「ご依頼」タブにプランや項目を入れると、ボタンはご依頼ページへ進みます（まだ何も入れていないあいだは、下のリンク先URLへ進みます）。リンク先URLは、ご依頼ページの下にも「ご依頼・お問い合わせ」のボタンで出ます。</p>' +
     tin('texts.commissionEn', '見出し') + tin('texts.commissionBody', '説明文', { area: 1, rows: 3 }) +
     '<div class="pair">' + tin('texts.commissionButton', 'ボタンの文字') + tin('texts.commissionUrl', 'ボタンのリンク先URL', { type: 'url', ph: 'https://...' }) + '</div></section>';
   h += '<section class="ed-card"><h2>フッター</h2>' + tin('texts.footer', 'フッターの文字') + '</section>';
@@ -390,7 +435,7 @@ function panelPublish() {
 }
 function renderTabs() { elTabs.innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (t[0] === tab ? 'true' : 'false') + '">' + t[1] + '</button>'; }).join(''); }
 function renderPanel() {
-  var fn = { profile: panelProfile, works: panelWorks, text: panelText, design: panelDesign, publish: panelPublish, github: panelGithub }[tab];
+  var fn = { profile: panelProfile, works: panelWorks, commission: panelCommission, text: panelText, design: panelDesign, publish: panelPublish, github: panelGithub }[tab];
   elPanel.innerHTML = fn(); hydrate();
 }
 function hydrate() {
@@ -400,14 +445,27 @@ function hydrate() {
 }
 function updateSample() { var el = host.querySelector('#ed-sample'); if (el) el.outerHTML = sampleHTML(); }
 
-
+/* ---------- 操作 ---------- */
 async function handleFiles(kind, files, id, input) {
   var arr = Array.prototype.slice.call(files || []);
   if (input) input.value = '';
   if (!arr.length) return;
   function why(e) { return e && e.message === 'type' ? '画像ファイルではありません。' : e && e.message === 'big' ? 'ファイルが大きすぎます。' : '読み込めない形式かもしれません。'; }
   try {
-    if (kind === 'add') {
+    if (kind === 'cm-plan' || kind === 'cm-block') {
+      var cow = cmOwner(kind === 'cm-plan' ? 'plan' : 'block', id), okC = 0;
+      if (cow) {
+        for (var ci = 0; ci < arr.length; ci++) {
+          setBusy('画像を読み込み中… (' + (ci + 1) + '/' + arr.length + ')');
+          try {
+            var isImgMode = kind === 'cm-plan' && cow.mode === 'image';
+            var cid2 = await addImage(arr[ci], isImgMode ? 2400 : 2000, isImgMode ? 0.9 : 0.88, (kind === 'cm-plan' && cow.mode !== 'image') ? wmText() : '');
+            cow.imgs.push(cid2); okC++; touch();
+          } catch (e) { toast('「' + arr[ci].name + '」を追加できませんでした。' + why(e), true); }
+        }
+        if (okC) toast(okC + '枚の画像を追加しました');
+      }
+    } else if (kind === 'add') {
       var okN = 0;
       for (var i = 0; i < arr.length; i++) {
         setBusy('作品を読み込み中… (' + (i + 1) + '/' + arr.length + ')');
@@ -436,7 +494,7 @@ function movePlan(i, d) { var j = i + d; if (j < 0 || j >= S.plans.length) retur
 function moveStyle(i, d) { var j = i + d; if (j < 0 || j >= S.styles.length) return; var t = S.styles[i]; S.styles[i] = S.styles[j]; S.styles[j] = t; touch(); renderPanel(); }
 function moveCat(i, d) { var j = i + d; if (j < 0 || j >= S.categories.length) return; var t = S.categories[i]; S.categories[i] = S.categories[j]; S.categories[j] = t; touch(); renderPanel(); }
 function closeOv() { elOv.hidden = true; elOv.innerHTML = ''; previewDoc = ''; previewPage = 'home'; previewHash = ''; }
-async function setPreviewPage(p, h) { previewPage = p === 'gallery' ? 'gallery' : 'home'; previewHash = h || ''; try { previewDoc = await buildPreviewDoc(); showFrame(); } catch (e) { } }
+async function setPreviewPage(p, h) { previewPage = (p === 'gallery' || p === 'commission') ? p : 'home'; previewHash = h || ''; try { previewDoc = await buildPreviewDoc(); showFrame(); } catch (e) { } }
 window.addEventListener('message', function (e) { var d = e.data, fr = elOv && elOv.querySelector ? elOv.querySelector('iframe') : null; if (d && d.meluneGo && fr && e.source === fr.contentWindow) setPreviewPage(d.meluneGo, d.hash); });
 
 async function buildPreviewDoc() {
@@ -452,7 +510,7 @@ async function openPreview(mode) {
   previewMode = mode || previewMode;
   elOv.hidden = false;
   elOv.innerHTML = '<div class="pv"><div class="pv-bar"><div class="seg" role="group" aria-label="表示の切り替え"><button type="button" data-pv="pc" aria-pressed="' + (previewMode === 'pc') + '">PC</button><button type="button" data-pv="sp" aria-pressed="' + (previewMode === 'sp') + '">スマホ</button></div>' +
-    '<div class="seg" role="group" aria-label="ページの切り替え"><button type="button" data-pvpage="home" aria-pressed="' + (previewPage === 'home') + '">トップ</button><button type="button" data-pvpage="gallery" aria-pressed="' + (previewPage === 'gallery') + '">全作品ページ</button></div>' +
+    '<div class="seg" role="group" aria-label="ページの切り替え"><button type="button" data-pvpage="home" aria-pressed="' + (previewPage === 'home') + '">トップ</button><button type="button" data-pvpage="gallery" aria-pressed="' + (previewPage === 'gallery') + '">全作品ページ</button><button type="button" data-pvpage="commission" aria-pressed="' + (previewPage === 'commission') + '">ご依頼ページ</button></div>' +
     '<span class="pv-note">下書きの内容です。まだ公開ページには反映されていません。</span><button type="button" class="btn-s" data-act="pv-close">閉じる</button><button type="button" class="btn-p" data-act="publish">サイトに反映</button></div>' +
     '<div class="pv-stage" id="pv-stage"><p class="ed-boot">読み込み中…</p></div></div>';
   try { await flush(); previewDoc = await buildPreviewDoc(); showFrame(); }
@@ -505,7 +563,7 @@ async function doZip() {
     setBusy(''); closeOv(); toast(e && e.message === 'save' ? '下書きを保存できなかったため、書き出しを中止しました。' : '書き出せませんでした。もう一度お試しください。', true);
   }
 }
-
+/* ---------- GitHub 接続（公開ページへの反映） ---------- */
 var GH_KEY = 'melune-gh';
 function guessRepo() {
   var m = location.hostname.match(/^([^.]+)\.github\.io$/i);
@@ -661,7 +719,7 @@ async function discardDraft() {
   touch(); renderPanel(); toast('下書きを破棄して、公開中の内容に戻しました');
 }
 
-
+/* ---------- イベント ---------- */
 function syncOpt(id, name) { Array.prototype.forEach.call(elPanel.querySelectorAll('option'), function (o) { if (o.value === id) o.textContent = name; }); }
 function onInput(e) {
   var t = e.target; if (!t || !S) return;
@@ -684,6 +742,10 @@ function onInput(e) {
   else if (d.cat !== undefined) { var c = S.categories[+d.cat]; if (c) { c.name = t.value; syncOpt(c.id, t.value); touch(); } }
   else if (d.pln !== undefined) { var pc = S.plans[+d.pln]; if (pc) { pc.name = t.value; syncOpt(pc.id, t.value); touch(); } }
   else if (d.sty !== undefined) { var sc = S.styles[+d.sty]; if (sc) { sc.name = t.value; syncOpt(sc.id, t.value); touch(); } }
+  else if (d.cp !== undefined || d.cb !== undefined) {
+    var co = cmOwner(d.cp !== undefined ? 'plan' : 'block', d.cp !== undefined ? d.cp : d.cb);
+    if (co) { co[d.k] = t.value; touch(); if (d.k === 'mode') renderPanel(); }
+  }
   else if (d.w) { var w = S.works.filter(function (x) { return x.id === d.w; })[0]; if (w) {
     var oy = w.year;
     w[d.k] = d.k === 'no' ? t.value.replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16) : t.value;
@@ -730,6 +792,26 @@ host.addEventListener('click', function (e) {
     case 'gh-clear':
       if (arm(b)) { gh.token = ''; ghState = ''; ghStore(); toast('接続を解除しました'); renderPanel(); }
       break;
+    case 'add-cm-plan': S.commission.plans.push({ id: uid(), name: '新しいプラン', mode: 'input', price: '', desc: '', imgs: [] }); touch(); renderPanel(); break;
+    case 'add-cm-block': S.commission.blocks.push({ id: uid(), title: b.getAttribute('data-t') || '新しい項目', body: '', imgs: [] }); touch(); renderPanel(); break;
+    case 'cm-plan-up': case 'cm-plan-down': case 'cm-block-up': case 'cm-block-down':
+      var carr = a.indexOf('plan') >= 0 ? S.commission.plans : S.commission.blocks, cj = i + (/up$/.test(a) ? -1 : 1);
+      if (cj >= 0 && cj < carr.length) { var ct = carr[i]; carr[i] = carr[cj]; carr[cj] = ct; touch(); renderPanel(); }
+      break;
+    case 'rm-cm-plan': case 'rm-cm-block':
+      if (arm(b)) {
+        var carr2 = a === 'rm-cm-plan' ? S.commission.plans : S.commission.blocks, ck = carr2.findIndex(function (x) { return x.id === id; });
+        if (ck >= 0) { var gone = carr2[ck].imgs.slice(); carr2.splice(ck, 1); gone.forEach(releaseIfUnused); touch(); renderPanel(); }
+      }
+      break;
+    case 'cm-img-l': case 'cm-img-r': case 'cm-img-x':
+      var cio = cmOwner(b.getAttribute('data-k'), id);
+      if (cio) {
+        if (a === 'cm-img-x') { var rid = cio.imgs.splice(i, 1)[0]; releaseIfUnused(rid); }
+        else { var cj2 = i + (a === 'cm-img-l' ? -1 : 1); if (cj2 >= 0 && cj2 < cio.imgs.length) { var tt = cio.imgs[i]; cio.imgs[i] = cio.imgs[cj2]; cio.imgs[cj2] = tt; } }
+        touch(); renderPanel();
+      }
+      break;
     case 'rm-hero': if (arm(b)) { var o = S.heroId; S.heroId = null; releaseIfUnused(o); touch(); renderPanel(); } break;
     case 'rm-icon': if (arm(b)) { var o2 = S.iconId; S.iconId = null; releaseIfUnused(o2); touch(); renderPanel(); } break;
     case 'add-link': S.links.push({ label: '', url: '' }); touch(); renderPanel(); break;
@@ -768,7 +850,7 @@ host.addEventListener('click', function (e) {
 elOv.addEventListener('click', function (e) { if (e.target === elOv && !elOv.querySelector('.pv')) closeOv(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !elOv.hidden) closeOv(); });
 
-
+/* ---------- 起動 ---------- */
 (async function () {
   idb = await openDB();
   ghLoad();
