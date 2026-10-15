@@ -86,7 +86,32 @@ window.SITE_DATA = {
   "defaultCat": "commission",
   "commission": {
     "intro": "",
-    "plans": [],
+    "plans": [
+      {
+        "id": "enlqwmxq2dyu",
+        "name": "簡易ペアイラスト",
+        "mode": "input",
+        "price": "胸上 1,500円 / 腰上 2,500円",
+        "desc": "- ラフ提出なし\n- スクエアサイズ（1,500px 144dpi）\n- 商用不可 / 個人利用のみ",
+        "imgs": []
+      },
+      {
+        "id": "byfar9je5s7r",
+        "name": "シンプルイラスト",
+        "mode": "input",
+        "price": "胸上 2,000円 / 腰上 3,500円",
+        "desc": "- ラフ提出なし\n- 1名あたりの金額です\n- 非公開対応 +1,500円\n　フルサイズでの公開が不可能な全てのご依頼に適用されます\n- 商用利用 +3,000円～",
+        "imgs": []
+      },
+      {
+        "id": "bu04mpe279kc",
+        "name": "シンプルイラスト 全身",
+        "mode": "input",
+        "price": "5,500円～",
+        "desc": "- 1名あたりの金額です\n- ラフ提出有\n- 非公開対応 +1,500円\n　フルサイズでの公開が不可能な全てのご依頼に適用されます\n- 商用利用 +3,000円～",
+        "imgs": []
+      }
+    ],
     "blocks": [
       {
         "id": "yk08eh2vls4q",
