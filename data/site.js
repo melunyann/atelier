@@ -350,7 +350,7 @@ window.SITE_DATA = {
       "imgId": "31u68vzjfmaa",
       "title": "自主制作②",
       "desc": "作品交換にて制作した詰め込みイラスト",
-      "cat": "commission",
+      "cat": "",
       "year": "2026",
       "style": "zfyr6ffd64zf",
       "plan": "172i2eqjm6oi",
