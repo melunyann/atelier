@@ -14,7 +14,7 @@ var FONT_HREF = 'https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wg
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-/* ---------- ブラウザ内の保存（IndexedDB） ---------- */
+
 var idb = null;
 function openDB() {
   return new Promise(function (res) {
@@ -43,8 +43,8 @@ function dbPut(s, k, v) { return tx(s, 'readwrite', function (o) { return o.put(
 function dbDel(s, k) { return tx(s, 'readwrite', function (o) { return o.delete(k); }); }
 function dbKeys(s) { return tx(s, 'readonly', function (o) { return o.getAllKeys(); }); }
 
-/* ---------- ZIP（圧縮なし）を作る ---------- */
-var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
+
+  var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
 function crc32(u8) { var c = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
 function makeZip(files) {
   var enc = new TextEncoder(), parts = [], central = [], offset = 0, now = new Date();
@@ -70,9 +70,9 @@ function makeZip(files) {
   return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), { type: 'application/zip' });
 }
 
-/* ---------- 状態 ---------- */
+
 var S = null, pubSig = '', saving = false, queued = false, dirty = false, saveErr = false, lastSaved = 0, timer = 0;
-var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', addPlan = '', armed = null, armTimer = 0, previewDoc = '', previewMode = 'pc', memOnly = false;
+var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', addPlan = '', armed = null, armTimer = 0, previewDoc = '', previewPage = 'home', previewHash = '', previewMode = 'pc', memOnly = false;
 var blobs = {};
 var baseState = null, gh = { repo: '', branch: '', dir: '', token: '' }, ghState = '';
 var TABS = [['profile', 'プロフィール'], ['works', '作品'], ['text', '文字'], ['design', 'デザイン'], ['publish', '公開'], ['github', '接続']];
@@ -86,7 +86,7 @@ host.innerHTML =
 var elStatus = host.querySelector('#ed-status'), elTabs = host.querySelector('#ed-tabs'), elPanel = host.querySelector('#ed-panel'),
   elBusy = host.querySelector('#ed-busy'), elToast = host.querySelector('#ed-toast'), elOv = host.querySelector('#ed-ov');
 
-/* ---------- 小さな道具 ---------- */
+
 function fmtTime(t) { var d = new Date(t); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 function setBusy(t) { elBusy.textContent = t || ''; elBusy.hidden = !t; }
 var toastT = 0;
@@ -101,7 +101,7 @@ function arm(btn) {
   return false;
 }
 
-/* ---------- 保存 ---------- */
+
 function updateStatus() {
   if (!S) return;
   var diff = JSON.stringify(S) !== pubSig, h = '';
@@ -137,7 +137,7 @@ async function flush() {
 }
 document.addEventListener('visibilitychange', function () { if (document.hidden && dirty && S) saveDraft(); });
 
-/* ---------- 画像 ---------- */
+
 function blobToURL(b) { return URL.createObjectURL(b); }
 function wmStyle(kind) {
   if (kind === 'pink') {
@@ -219,7 +219,7 @@ async function gcImages() {
   } catch (e) { }
 }
 
-/* ---------- 画面（パネル） ---------- */
+
 function field(label, input, cls) { return '<label class="f' + (cls ? ' ' + cls : '') + '">' + label + input + '</label>'; }
 function tin(path, label, opt) {
   opt = opt || {}; var v = pathGet(S, path) || '';
@@ -261,11 +261,23 @@ function styleOptions(sel) {
 function planOptions(sel) {
   return '<option value=""' + (!sel ? ' selected' : '') + '>未設定</option>' + S.plans.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === sel ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
 }
+function noSeq(no, year) { if (!no || !year || no.indexOf(year) !== 0) return 0; var r = no.slice(year.length); return /^\d+$/.test(r) ? parseInt(r, 10) : 0; }
+function nextNo(year) {
+  if (!year) return '';
+  var m = 0; S.works.forEach(function (w) { if (w.year === year) { var q = noSeq(w.no, year); if (q > m) m = q; } });
+  var s = String(m + 1); while (s.length < 3) s = '0' + s;
+  return year + s;
+}
+function fillNumbers() {
+  var ch = false;
+  for (var i = S.works.length - 1; i >= 0; i--) { var w = S.works[i]; if (w.year && !w.no) { w.no = nextNo(w.year); ch = true; } }
+  return ch;
+}
 function panelWorks() {
   if (!S.categories.some(function (c) { return c.id === addCat; })) addCat = S.categories.length ? S.categories[S.categories.length - 1].id : '';
   if (addPlan && !S.plans.some(function (c) { return c.id === addPlan; })) addPlan = '';
   if (addStyle && !S.styles.some(function (c) { return c.id === addStyle; })) addStyle = '';
-  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。新しく追加した作品は、作品一覧の先頭（いちばん上）に入ります。ここで選んだカテゴリー・プラン・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
+  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。新しく追加した作品は、作品一覧の先頭（いちばん上）に入ります。作品番号は、制作した年＋3桁の連番（例：2026001）が自動で付きます。年を「未設定」にすると、番号は付きません。ここで選んだカテゴリー・プラン・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
     '<div class="row"><label class="f" style="margin:0;min-width:140px"><span>カテゴリー</span><select class="f-in" id="add-cat">' + catOptions(addCat) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:140px"><span>プラン</span><select class="f-in" id="add-plan">' + planOptions(addPlan) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:110px"><span>制作した年</span><select class="f-in" id="add-year">' + yearOptions(addYear) + '</select></label>' +
@@ -288,6 +300,9 @@ function panelWorks() {
     h += '<div class="cat-row"><input type="text" data-sty="' + i + '" value="' + esc(c.name) + '" aria-label="絵柄の名前"><div class="row"><button type="button" class="btn-s" data-act="style-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="style-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.styles.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-style" data-i="' + i + '">削除</button></div></div>';
   });
   h += '<div class="row"><button type="button" class="btn-s" data-act="add-style">絵柄を追加</button></div></section>';
+  h += '<section class="ed-card"><h2>トップページに出す作品</h2><p class="ed-hint">トップページには、選んだカテゴリーの作品を、作品一覧の上から数えて横並びで出します（新しく追加した作品が上に入るので、最新の作品になります）。絞り込みと検索は、「もっと見る」で開く全作品ページにだけ付きます。</p>' +
+    '<div class="pair">' + field('出すカテゴリー', '<select data-path="topCat"><option value="all"' + (S.topCat === 'all' ? ' selected' : '') + '>ALL（すべての作品）</option>' + S.categories.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === S.topCat ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select>') +
+    field('出す枚数（1〜12）', '<input type="number" min="1" max="12" data-path="topCount" value="' + S.topCount + '">') + '</div></section>';
   h += '<section class="ed-card"><h2>画像の保護</h2><p class="ed-hint">完全に防ぐことはできませんが、気軽な保存や持ち出し、AIの学習への利用を防ぎやすくします。</p>' +
     '<label class="chk"><input type="checkbox" data-path="protect.noSave"' + (S.protect.noSave ? ' checked' : '') + '>右クリック・長押し・ドラッグでの画像保存をできなくする</label>' +
     '<label class="chk"><input type="checkbox" data-path="protect.wm"' + (S.protect.wm ? ' checked' : '') + '>作品の画像に透かしを全体に敷き詰める</label>' +
@@ -299,6 +314,7 @@ function panelWorks() {
     '<label class="chk"><input type="checkbox" data-path="showSort"' + (S.showSort ? ' checked' : '') + '>訪問者が並び順を切り替えられるようにする（制作年が2種類以上あるときに表示）</label></section>';
   h += '<section class="ed-card"><h2>作品一覧（' + S.works.length + '）</h2>';
   if (!S.works.length) h += '<p class="empty-note">まだ作品がありません。上の「画像を選ぶ」から追加してください。<br>追加するまでは、公開ページに空のフレームが並びます。</p>';
+  var noCount = {}; S.works.forEach(function (x) { if (x.no) noCount[x.no] = (noCount[x.no] || 0) + 1; });
   S.works.forEach(function (w, i) {
     h += '<article class="wk"><div class="wk-thumb"><img data-load="' + esc(w.imgId) + '" alt=""><span class="wk-no">' + (i + 1) + '</span></div><div class="wk-body">' +
       field('タイトル', '<input type="text" data-w="' + w.id + '" data-k="title" value="' + esc(w.title) + '" placeholder="タイトル">') +
@@ -307,7 +323,9 @@ function panelWorks() {
       field('カテゴリー', '<select data-w="' + w.id + '" data-k="cat">' + catOptions(w.cat) + '</select>') +
       field('プラン', '<select data-w="' + w.id + '" data-k="plan">' + planOptions(w.plan) + '</select>') +
       field('制作した年', '<select data-w="' + w.id + '" data-k="year">' + yearOptions(w.year) + '</select>') +
-      field('絵柄', '<select data-w="' + w.id + '" data-k="style">' + styleOptions(w.style) + '</select>') + '</div>' +
+      field('絵柄', '<select data-w="' + w.id + '" data-k="style">' + styleOptions(w.style) + '</select>') +
+      field('作品番号', '<input type="text" data-w="' + w.id + '" data-k="no" value="' + esc(w.no || '') + '" placeholder="年を選ぶと自動で付きます" maxlength="16" spellcheck="false">') + '</div>' +
+      (w.no && noCount[w.no] > 1 ? '<p class="ed-hint" style="color:#b4415a;margin:0 0 6px">この番号は、他の作品にも付いています。番号を変えてください。</p>' : '') +
       '<div class="row"><button type="button" class="btn-s" data-act="up" data-id="' + w.id + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="down" data-id="' + w.id + '"' + (i === S.works.length - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
       '<label class="btn-s">画像を差し替え<input type="file" accept="image/*" hidden data-file="replace" data-id="' + w.id + '"></label><button type="button" class="btn-d" data-act="rm-work" data-id="' + w.id + '">削除</button></div></div></article>';
   });
@@ -324,6 +342,10 @@ function panelText() {
     tin('texts.noMatchText', '該当する作品がないときの文') +
     '<div class="pair">' + tin('texts.sortLabel', '並び順の見出し') + tin('texts.sortManual', '「おすすめ順」の文字') + '</div>' +
     '<div class="pair">' + tin('texts.sortNew', '「新しい順」の文字') + tin('texts.sortOld', '「古い順」の文字') + '</div></section>';
+  h += '<section class="ed-card"><h2>トップ・全作品ページの文字</h2>' + tin('texts.viewAllLabel', 'トップの「もっと見る」ボタンの文字') + tin('texts.searchPlaceholder', '検索欄の案内文') + tin('texts.resultSuffix', '件数の後ろに付ける文字（例：件）') + '</section>';
+  h += '<section class="ed-card"><h2>メニュー（ハンバーガーメニュー）</h2><p class="ed-hint">公開ページの右上に出る「三」のボタンの中身です。「Gallery」は今のページのギャラリーへ、「Commission」は下のご依頼セクションへ移動します。ご依頼セクションのリンク先URLが空のあいだ、「Commission」は「準備中」と表示されます。</p>' +
+    '<label class="chk"><input type="checkbox" data-path="showMenu"' + (S.showMenu ? ' checked' : '') + '>右上にメニューボタンを表示する</label>' +
+    '<div class="pair">' + tin('texts.menuHome', '1番目の項目（ページの先頭へ）') + tin('texts.menuGallery', '2番目の項目（ギャラリーへ）') + '</div>' + tin('texts.menuCommission', '3番目の項目（ご依頼へ）') + '</section>';
   h += '<section class="ed-card"><h2>ご依頼セクション</h2><p class="ed-hint">リンク先URLを入れると、ギャラリーの下にボタン付きで表示されます。空のときは表示されません。</p>' +
     tin('texts.commissionEn', '見出し') + tin('texts.commissionBody', '説明文', { area: 1, rows: 3 }) +
     '<div class="pair">' + tin('texts.commissionButton', 'ボタンの文字') + tin('texts.commissionUrl', 'ボタンのリンク先URL', { type: 'url', ph: 'https://...' }) + '</div></section>';
@@ -378,7 +400,7 @@ function hydrate() {
 }
 function updateSample() { var el = host.querySelector('#ed-sample'); if (el) el.outerHTML = sampleHTML(); }
 
-/* ---------- 操作 ---------- */
+
 async function handleFiles(kind, files, id, input) {
   var arr = Array.prototype.slice.call(files || []);
   if (input) input.value = '';
@@ -391,7 +413,7 @@ async function handleFiles(kind, files, id, input) {
         setBusy('作品を読み込み中… (' + (i + 1) + '/' + arr.length + ')');
         try {
           var iid = await addImage(arr[i], 2000, 0.88, wmText());
-          S.works.splice(okN, 0, { id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan }); okN++; touch();
+          S.works.splice(okN, 0, { id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan, no: nextNo(addYear) }); okN++; touch();
         } catch (e) { toast('「' + arr[i].name + '」を追加できませんでした。' + why(e), true); }
       }
       if (okN) toast(okN + '枚の作品を追加しました');
@@ -413,7 +435,9 @@ function moveWork(id, d) { var i = S.works.findIndex(function (w) { return w.id 
 function movePlan(i, d) { var j = i + d; if (j < 0 || j >= S.plans.length) return; var t = S.plans[i]; S.plans[i] = S.plans[j]; S.plans[j] = t; touch(); renderPanel(); }
 function moveStyle(i, d) { var j = i + d; if (j < 0 || j >= S.styles.length) return; var t = S.styles[i]; S.styles[i] = S.styles[j]; S.styles[j] = t; touch(); renderPanel(); }
 function moveCat(i, d) { var j = i + d; if (j < 0 || j >= S.categories.length) return; var t = S.categories[i]; S.categories[i] = S.categories[j]; S.categories[j] = t; touch(); renderPanel(); }
-function closeOv() { elOv.hidden = true; elOv.innerHTML = ''; previewDoc = ''; }
+function closeOv() { elOv.hidden = true; elOv.innerHTML = ''; previewDoc = ''; previewPage = 'home'; previewHash = ''; }
+async function setPreviewPage(p, h) { previewPage = p === 'gallery' ? 'gallery' : 'home'; previewHash = h || ''; try { previewDoc = await buildPreviewDoc(); showFrame(); } catch (e) { } }
+window.addEventListener('message', function (e) { var d = e.data, fr = elOv && elOv.querySelector ? elOv.querySelector('iframe') : null; if (d && d.meluneGo && fr && e.source === fr.contentWindow) setPreviewPage(d.meluneGo, d.hash); });
 
 async function buildPreviewDoc() {
   var urls = {}, ids = refIds(S);
@@ -421,13 +445,14 @@ async function buildPreviewDoc() {
   function js(v) { return JSON.stringify(v).replace(/</g, '\\u003c'); }
   return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<link rel="stylesheet" href="' + FONT_HREF + '"><link rel="stylesheet" href="../assets/style.css"></head><body>' +
-    '<div id="melune-root"></div><script>window.SITE_DATA=' + js(S) + ';window.SITE_PREVIEW={urls:' + js(urls) + '};<\/script>' +
+    '<div id="melune-root"></div><script>window.SITE_DATA=' + js(S) + ';window.SITE_PREVIEW={urls:' + js(urls) + ',page:' + js(previewPage) + ',hash:' + js(previewHash) + ',go:function(p,h){parent.postMessage({meluneGo:p,hash:h||""},"*");}};<\/script>' +
     '<script src="../assets/site.js"><\/script></body></html>';
 }
 async function openPreview(mode) {
   previewMode = mode || previewMode;
   elOv.hidden = false;
   elOv.innerHTML = '<div class="pv"><div class="pv-bar"><div class="seg" role="group" aria-label="表示の切り替え"><button type="button" data-pv="pc" aria-pressed="' + (previewMode === 'pc') + '">PC</button><button type="button" data-pv="sp" aria-pressed="' + (previewMode === 'sp') + '">スマホ</button></div>' +
+    '<div class="seg" role="group" aria-label="ページの切り替え"><button type="button" data-pvpage="home" aria-pressed="' + (previewPage === 'home') + '">トップ</button><button type="button" data-pvpage="gallery" aria-pressed="' + (previewPage === 'gallery') + '">全作品ページ</button></div>' +
     '<span class="pv-note">下書きの内容です。まだ公開ページには反映されていません。</span><button type="button" class="btn-s" data-act="pv-close">閉じる</button><button type="button" class="btn-p" data-act="publish">サイトに反映</button></div>' +
     '<div class="pv-stage" id="pv-stage"><p class="ed-boot">読み込み中…</p></div></div>';
   try { await flush(); previewDoc = await buildPreviewDoc(); showFrame(); }
@@ -436,6 +461,7 @@ async function openPreview(mode) {
 function showFrame() {
   var st = elOv.querySelector('#pv-stage'); if (!st || !previewDoc) return;
   Array.prototype.forEach.call(elOv.querySelectorAll('[data-pv]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-pv') === previewMode)); });
+  Array.prototype.forEach.call(elOv.querySelectorAll('[data-pvpage]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-pvpage') === previewPage)); });
   st.innerHTML = '';
   var f = document.createElement('iframe'); f.title = 'プレビュー'; f.srcdoc = previewDoc;
   var availW = Math.max(280, st.clientWidth - 24), availH = Math.max(360, st.clientHeight - 24);
@@ -479,7 +505,7 @@ async function doZip() {
     setBusy(''); closeOv(); toast(e && e.message === 'save' ? '下書きを保存できなかったため、書き出しを中止しました。' : '書き出せませんでした。もう一度お試しください。', true);
   }
 }
-/* ---------- GitHub 接続（公開ページへの反映） ---------- */
+
 var GH_KEY = 'melune-gh';
 function guessRepo() {
   var m = location.hostname.match(/^([^.]+)\.github\.io$/i);
@@ -635,7 +661,7 @@ async function discardDraft() {
   touch(); renderPanel(); toast('下書きを破棄して、公開中の内容に戻しました');
 }
 
-/* ---------- イベント ---------- */
+
 function syncOpt(id, name) { Array.prototype.forEach.call(elPanel.querySelectorAll('option'), function (o) { if (o.value === id) o.textContent = name; }); }
 function onInput(e) {
   var t = e.target; if (!t || !S) return;
@@ -658,7 +684,16 @@ function onInput(e) {
   else if (d.cat !== undefined) { var c = S.categories[+d.cat]; if (c) { c.name = t.value; syncOpt(c.id, t.value); touch(); } }
   else if (d.pln !== undefined) { var pc = S.plans[+d.pln]; if (pc) { pc.name = t.value; syncOpt(pc.id, t.value); touch(); } }
   else if (d.sty !== undefined) { var sc = S.styles[+d.sty]; if (sc) { sc.name = t.value; syncOpt(sc.id, t.value); touch(); } }
-  else if (d.w) { var w = S.works.filter(function (x) { return x.id === d.w; })[0]; if (w) { w[d.k] = t.value; touch(); } }
+  else if (d.w) { var w = S.works.filter(function (x) { return x.id === d.w; })[0]; if (w) {
+    var oy = w.year;
+    w[d.k] = d.k === 'no' ? t.value.replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16) : t.value;
+    if (d.k === 'year' && w.year !== oy) {
+      var auto = !w.no || (oy && noSeq(w.no, oy) > 0);
+      if (auto) { w.no = ''; w.no = w.year ? nextNo(w.year) : ''; }
+      touch(); renderPanel(); return;
+    }
+    touch();
+  } }
   else if (t.id === 'add-cat') { addCat = t.value; }
   else if (t.id === 'add-year') { addYear = t.value; }
   else if (t.id === 'add-plan') { addPlan = t.value; }
@@ -675,6 +710,8 @@ host.addEventListener('click', function (e) {
   if (tb) { tab = tb.getAttribute('data-tab'); renderTabs(); renderPanel(); window.scrollTo(0, 0); return; }
   var pv = e.target.closest('[data-pv]');
   if (pv) { previewMode = pv.getAttribute('data-pv'); showFrame(); return; }
+  var pp = e.target.closest('[data-pvpage]');
+  if (pp) { setPreviewPage(pp.getAttribute('data-pvpage'), ''); return; }
   var b = e.target.closest('[data-act]'); if (!b) return;
   var a = b.getAttribute('data-act'), id = b.getAttribute('data-id'), i = +b.getAttribute('data-i');
   switch (a) {
@@ -731,7 +768,7 @@ host.addEventListener('click', function (e) {
 elOv.addEventListener('click', function (e) { if (e.target === elOv && !elOv.querySelector('.pv')) closeOv(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !elOv.hidden) closeOv(); });
 
-/* ---------- 起動 ---------- */
+
 (async function () {
   idb = await openDB();
   ghLoad();
@@ -748,6 +785,7 @@ document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !e
   if (!S) S = base;
   if (S.categories.length) addCat = S.categories[S.categories.length - 1].id;
   renderTabs(); renderPanel(); updateStatus();
+  if (fillNumbers()) { touch(); renderPanel(); }
   gcImages();
 })();
 })();
