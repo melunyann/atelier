@@ -52,16 +52,16 @@ window.SITE_DATA = {
       "url": "https://x.com/melunyann"
     },
     {
+      "label": "mail",
+      "url": "mailto:melune25@gmail.com"
+    },
+    {
       "label": "Skeb",
       "url": "https://skeb.jp/@melunyann"
     },
     {
-      "label": "お見積り",
-      "url": "https://mitsumotto.com/u/melune"
-    },
-    {
-      "label": "つなぐ",
-      "url": " https://tsunagu.cloud/users/melunyann"
+      "label": "TikTok",
+      "url": "https://www.tiktok.com/@melune.nyam?is_from_webapp=1&sender_device=pc"
     }
   ],
   "categories": [
