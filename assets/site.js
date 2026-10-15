@@ -47,6 +47,7 @@ function defaultState() {
       sortLabel: '並び順', sortManual: 'おすすめ順', sortNew: '新しい順', sortOld: '古い順',
       moreLabel: '絞り込み', clearLabel: '選択を解除',
       menuHome: 'Home', menuGallery: 'Gallery', menuCommission: 'Commission',
+      commissionJa: 'ご依頼について', commissionPlanEn: 'Plan', commissionPlanJa: 'プラン', commissionApply: 'ご依頼・お問い合わせ', commissionEmpty: 'ご依頼ページは準備中です。もうすこしだけお待ちください。',
       viewAllLabel: 'もっと見る', searchPlaceholder: 'タイトル・番号・キーワードで検索', resultSuffix: '件'
     },
     activities: ['美少女イラスト制作', 'キャラクターデザイン', '創作キャラクターのビジュアル制作', 'イラストコミッション'],
@@ -55,6 +56,7 @@ function defaultState() {
     styles: [],
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'manual', showSort: true, defaultCat: 'commission',
+    commission: { intro: '', plans: [], blocks: [] },
     showMenu: true, topCat: 'commission', topCount: 6,
     protect: { noSave: true, wm: true, wmText: 'melune sample', wmColor: 'white' },
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
@@ -102,11 +104,24 @@ function normalizeState(raw) {
   s.works = Array.isArray(raw.works) ? raw.works.filter(function (w) { return w && w.id && w.imgId; }).map(function (w) {
     return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || ''), no: String(w.no || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16) };
   }) : [];
+  s.commission = { intro: '', plans: [], blocks: [] };
+  var rc = raw.commission;
+  if (rc && typeof rc === 'object') {
+    var cid = function (a) { return Array.isArray(a) ? a.map(String).filter(function (x) { return /^[0-9A-Za-z_-]+$/.test(x); }) : []; };
+    if (typeof rc.intro === 'string') s.commission.intro = rc.intro;
+    if (Array.isArray(rc.plans)) s.commission.plans = rc.plans.filter(function (p) { return p && p.id; }).map(function (p) {
+      return { id: String(p.id), name: String(p.name || ''), mode: p.mode === 'image' ? 'image' : 'input', price: String(p.price || ''), desc: String(p.desc || ''), imgs: cid(p.imgs) };
+    });
+    if (Array.isArray(rc.blocks)) s.commission.blocks = rc.blocks.filter(function (b) { return b && b.id; }).map(function (b) {
+      return { id: String(b.id), title: String(b.title || ''), body: String(b.body || ''), imgs: cid(b.imgs) };
+    });
+  }
   return s;
 }
 function refIds(S) {
   var out = [];
-  [S.heroId, S.iconId].concat(S.works.map(function (w) { return w.imgId; })).forEach(function (id) { if (id && out.indexOf(id) < 0) out.push(id); });
+  var cm = []; S.commission.plans.concat(S.commission.blocks).forEach(function (x) { cm = cm.concat(x.imgs); });
+  [S.heroId, S.iconId].concat(S.works.map(function (w) { return w.imgId; })).concat(cm).forEach(function (id) { if (id && out.indexOf(id) < 0) out.push(id); });
   return out;
 }
 function siteVars(S) {
@@ -157,20 +172,43 @@ function filterGroups(S) {
   return groups;
 }
 
+function pageHref(from, to) { return (from === 'home' ? '' : '../') + (to === 'home' ? 'index.html' : to + '/index.html'); }
+function cmImgs(ids, title, one) {
+  if (!ids.length) return '';
+  return '<div class="cm-imgs' + (one || ids.length === 1 ? ' one' : '') + '" data-ids="' + esc(ids.join(',')) + '" data-t="' + esc(title) + '"></div>';
+}
+function commissionHTML(S) {
+  var T = S.texts, C = S.commission, url = safeUrl(T.commissionUrl);
+  var h = '<section class="gallery gp cm" id="commission"><div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionJa ? '<p class="g-ja">' + esc(T.commissionJa) + '</p>' : '') + '</div>';
+  if (!C.plans.length && !C.blocks.length && !C.intro) return h + '<p class="empty">' + esc(T.commissionEmpty) + '</p></section>';
+  if (C.intro) h += '<p class="cm-intro">' + esc(C.intro) + '</p>';
+  if (C.plans.length) {
+    h += '<div class="cm-sec"><div class="g-head cm-sh"><h2 class="g-en sm">' + esc(T.commissionPlanEn) + '</h2>' + (T.commissionPlanJa ? '<p class="g-ja">' + esc(T.commissionPlanJa) + '</p>' : '') + '</div><div class="cm-plans">' +
+      C.plans.map(function (p) {
+        var inp = p.mode !== 'image', head = (p.name ? '<h3 class="cm-pn">' + esc(p.name) + '</h3>' : '') + (inp && p.price ? '<span class="cm-price">' + esc(p.price) + '</span>' : '');
+        return '<article class="cm-plan' + (inp ? '' : ' is-image') + '">' + (head ? '<div class="cm-ph">' + head + '</div>' : '') + (inp && p.desc ? '<p class="cm-desc">' + esc(p.desc) + '</p>' : '') + cmImgs(p.imgs, p.name, !inp) + '</article>';
+      }).join('') + '</div></div>';
+  }
+  C.blocks.forEach(function (b) {
+    h += '<div class="cm-block">' + (b.title ? '<h2 class="cm-h">' + esc(b.title) + '</h2>' : '') + (b.body ? '<p class="cm-body">' + esc(b.body) + '</p>' : '') + cmImgs(b.imgs, b.title, false) + '</div>';
+  });
+  if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
+  return h + '</section>';
+}
+
 function siteHTML(S, page) {
-  page = page === 'gallery' ? 'gallery' : 'home';
+  page = page === 'gallery' || page === 'commission' ? page : 'home';
   var T = S.texts, name = T.siteName || '';
   var links = S.links.filter(function (l) { return safeUrl(l.url); });
   var tags = S.activities.filter(function (a) { return a && a.trim(); });
-  var cta = safeUrl(T.commissionUrl);
+  var cta = safeUrl(T.commissionUrl), hasCm = !!(S.commission.plans.length || S.commission.blocks.length);
   var h = '<div class="site" id="top" style="' + esc(siteVars(S)) + '">';
   if (S.showMenu) {
-    var home = page === 'home';
     var lh = T.menuHome || 'Home', lg = T.menuGallery || 'Gallery', lc = T.menuCommission || 'Commission';
+    var pg = function (key, label) { return key === page ? { l: label, to: 'top' } : { l: label, href: pageHref(page, key), page: key }; };
     var items = [
-      home ? { l: lh, to: 'top' } : { l: lh, href: '../index.html', page: 'home' },
-      home ? { l: lg, href: 'gallery/index.html', page: 'gallery' } : { l: lg, to: 'top' },
-      !cta ? { l: lc, soon: true } : home ? { l: lc, to: 'commission' } : { l: lc, href: '../index.html#commission', page: 'home', hash: 'commission' }
+      pg('home', lh), pg('gallery', lg),
+      hasCm ? pg('commission', lc) : !cta ? { l: lc, soon: true } : page === 'home' ? { l: lc, to: 'commission' } : { l: lc, href: '../index.html#commission', page: 'home', hash: 'commission' }
     ];
     h += '<button type="button" class="mb" aria-expanded="false" aria-controls="mn" aria-label="メニューを開く"><span class="mb-l" aria-hidden="true"></span><span class="mb-l" aria-hidden="true"></span><span class="mb-l" aria-hidden="true"></span></button>';
     h += '<nav class="mn" id="mn" hidden aria-label="メニュー"><div class="mn-back" data-mclose></div><div class="mn-in"><div class="orn" aria-hidden="true">' + BOW + '</div><ul class="mn-list">' +
@@ -195,7 +233,7 @@ function siteHTML(S, page) {
   if (page === 'home') {
     h += '<section class="gallery" id="gallery">' + gHead + '<div class="strip"></div><p class="empty" hidden>' + esc(T.emptyText) + '</p>' +
       (S.works.length ? '<div class="more-wrap"><a class="btn" href="gallery/index.html" data-page="gallery">' + esc(T.viewAllLabel || 'もっと見る') + '</a></div>' : '') + '</section>';
-  } else {
+  } else if (page === 'gallery') {
     h += '<section class="gallery gp" id="gallery">' + gHead;
     h += '<div class="search"><svg class="s-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="5.6"/><path d="M13.3 13.3 17 17"/></svg><input type="search" class="s-in" placeholder="' + esc(T.searchPlaceholder || '') + '" aria-label="' + esc(T.searchPlaceholder || '作品を検索') + '" autocomplete="off" enterkeyhint="search"><button type="button" class="s-x" hidden aria-label="入力を消す">&times;</button></div>';
   var groups = filterGroups(S), sc = startCat(S);
@@ -217,8 +255,10 @@ function siteHTML(S, page) {
     h += '</div>';
   } else h += '<div class="filters" hidden></div>';
     h += '<p class="f-result" aria-live="polite" hidden></p><div class="cols"><div class="col"></div><div class="col"></div></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
+  } else {
+    h += commissionHTML(S);
   }
-  if (cta && page === 'home') h += '<section class="cta" id="commission"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + '<a class="btn" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionButton || '詳しく見る') + '</a></div></section>';
+  if ((cta || hasCm) && page === 'home') h += '<section class="cta" id="commission"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + (hasCm ? '<a class="btn" href="commission/index.html" data-page="commission">' : '<a class="btn" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">') + esc(T.commissionButton || '詳しく見る') + '</a></div></section>';
   h += '<footer class="foot"><span class="copy">' + esc(T.footer) + '</span></footer>';
   h += '<div class="modal" hidden role="dialog" aria-modal="true" aria-label="作品の拡大表示"><div class="m-back" data-close></div>' +
     '<figure class="m-card"><button type="button" class="m-x" data-close aria-label="' + esc(T.closeLabel || '閉じる') + '">&times;</button>' +
@@ -229,7 +269,7 @@ function siteHTML(S, page) {
 }
 
 function mountSite(root, S, src, opts) {
-  var page = opts && opts.page === 'gallery' ? 'gallery' : 'home';
+  var page = opts && (opts.page === 'gallery' || opts.page === 'commission') ? opts.page : 'home';
   var doc = root.ownerDocument;
   root.innerHTML = siteHTML(S, page);
   Array.prototype.forEach.call(root.querySelectorAll('img[data-img]'), function (im) {
@@ -316,7 +356,19 @@ function mountSite(root, S, src, opts) {
     }
     list = topList(S); list.forEach(function (w) { strip.appendChild(node(w)); }); empty.hidden = true;
   }
+  function layoutCommission() {
+    list = [];
+    Array.prototype.forEach.call(site.querySelectorAll('.cm-imgs'), function (box) {
+      var ids = (box.getAttribute('data-ids') || '').split(',').filter(Boolean), t = box.getAttribute('data-t') || '';
+      box.innerHTML = '';
+      ids.forEach(function (iid) {
+        var w = { id: 'cm' + list.length, imgId: iid, title: t, desc: '', cat: '', year: '', style: '', plan: '', no: '' };
+        list.push(w); box.appendChild(node(w));
+      });
+    });
+  }
   function layout() {
+    if (page === 'commission') { layoutCommission(); return; }
     if (page === 'home') { layoutHome(); return; }
     list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (!filter.plan.length || filter.plan.indexOf(w.plan) >= 0) && (!filter.year.length || filter.year.indexOf(w.year) >= 0) && (!filter.style.length || filter.style.indexOf(w.style) >= 0) && matchQ(w); });
     cols.forEach(function (c) { while (c.firstChild) c.removeChild(c.firstChild); });
@@ -369,7 +421,7 @@ function mountSite(root, S, src, opts) {
     if (locked) { doc.documentElement.style.overflow = ''; locked = false; }
     if (lastBtn && lastBtn.focus) lastBtn.focus();
   }
-  (site.querySelector('.cols') || strip).addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.work') : null; if (b) openM(b); });
+  (site.querySelector('.cols') || strip || site.querySelector('.cm')).addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('.work') : null; if (b) openM(b); });
   var moreBtn = site.querySelector('.chip.more'), morePanel = site.querySelector('.f-more'), countEl = site.querySelector('.f-count'), clearBtn = site.querySelector('.f-clear');
   function syncMore() {
     var n = filter.plan.length + filter.year.length + filter.style.length;
@@ -440,7 +492,7 @@ if (root) {
     if (he && he.scrollIntoView) he.scrollIntoView();
   } catch (e) { }
   try {
-    document.title = pageName === 'gallery' ? ((S.texts.galleryEn || 'Gallery') + ' | ' + (S.texts.siteName || 'melune')) : (S.texts.siteName || 'melune');
+    document.title = pageName === 'gallery' ? ((S.texts.galleryEn || 'Gallery') + ' | ' + (S.texts.siteName || 'melune')) : pageName === 'commission' ? ((S.texts.commissionEn || 'Commission') + ' | ' + (S.texts.siteName || 'melune')) : (S.texts.siteName || 'melune');
     document.body.style.background = col(S.design.bg, '#FFF9F8');
     var desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute('content', (S.texts.tagline ? S.texts.tagline + ' ' : '') + (S.texts.intro || ''));
