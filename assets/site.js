@@ -102,7 +102,7 @@ function normalizeState(raw) {
     if (m && typeof m === 'object') s.imgs[k] = { w: +m.w || 0, h: +m.h || 0, file: String(m.file || '') };
   });
   s.works = Array.isArray(raw.works) ? raw.works.filter(function (w) { return w && w.id && w.imgId; }).map(function (w) {
-    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || ''), no: String(w.no || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16) };
+    return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || ''), no: String(w.no || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16), extra: Array.isArray(w.extra) ? w.extra.map(String).filter(function (x) { return /^[0-9A-Za-z_-]+$/.test(x) && x !== String(w.imgId); }) : [] };
   }) : [];
   s.commission = { intro: '', plans: [], blocks: [] };
   var rc = raw.commission;
@@ -121,7 +121,8 @@ function normalizeState(raw) {
 function refIds(S) {
   var out = [];
   var cm = []; S.commission.plans.concat(S.commission.blocks).forEach(function (x) { cm = cm.concat(x.imgs); });
-  [S.heroId, S.iconId].concat(S.works.map(function (w) { return w.imgId; })).concat(cm).forEach(function (id) { if (id && out.indexOf(id) < 0) out.push(id); });
+  var ex = []; S.works.forEach(function (w) { ex = ex.concat(w.extra || []); });
+  [S.heroId, S.iconId].concat(S.works.map(function (w) { return w.imgId; })).concat(ex).concat(cm).forEach(function (id) { if (id && out.indexOf(id) < 0) out.push(id); });
   return out;
 }
 function siteVars(S) {
@@ -262,7 +263,7 @@ function siteHTML(S, page) {
   h += '<footer class="foot"><span class="copy">' + esc(T.footer) + '</span></footer>';
   h += '<div class="modal" hidden role="dialog" aria-modal="true" aria-label="作品の拡大表示"><div class="m-back" data-close></div>' +
     '<figure class="m-card"><button type="button" class="m-x" data-close aria-label="' + esc(T.closeLabel || '閉じる') + '">&times;</button>' +
-    '<div class="m-img"><img alt=""></div><figcaption class="m-cap"><div class="m-no" hidden></div><div class="m-meta"></div><h3 class="m-title"></h3><p class="m-desc"></p></figcaption></figure>' +
+    '<div class="m-img"><img alt=""></div><div class="m-vars" hidden></div><figcaption class="m-cap"><div class="m-no" hidden></div><div class="m-meta"></div><h3 class="m-title"></h3><p class="m-desc"></p></figcaption></figure>' +
     '<button type="button" class="m-nav prev" aria-label="前の作品">&#8249;</button><button type="button" class="m-nav next" aria-label="次の作品">&#8250;</button></div>';
   h += '</div>';
   return h;
@@ -311,12 +312,12 @@ function mountSite(root, S, src, opts) {
   if (S.protect && S.protect.noSave) {
     site.classList.add('nosave');
     Array.prototype.forEach.call(site.querySelectorAll('img'), function (im) { im.draggable = false; });
-    site.addEventListener('contextmenu', function (e) { var t = e.target; if (t && t.closest && t.closest('img,.work,.m-img,.hero,.icon-wrap')) e.preventDefault(); });
+    site.addEventListener('contextmenu', function (e) { var t = e.target; if (t && t.closest && t.closest('img,.work,.m-img,.m-vars,.hero,.icon-wrap')) e.preventDefault(); });
     site.addEventListener('dragstart', function (e) { if (e.target && e.target.tagName === 'IMG') e.preventDefault(); });
   }
   var cols = Array.prototype.slice.call(site.querySelectorAll('.col'));
   var empty = site.querySelector('.empty');
-  var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc');
+  var modal = site.querySelector('.modal'), mi = modal.querySelector('.m-img img'), mm = modal.querySelector('.m-meta'), mt = modal.querySelector('.m-title'), md = modal.querySelector('.m-desc'), mv = modal.querySelector('.m-vars'), mcard = modal.querySelector('.m-card');
   var nodes = {}, filter = { cat: startCat(S), plan: [], year: [], style: [], sort: S.sort }, list = [], cur = -1, lastBtn = null, locked = false;
   var query = '', hay = {}, strip = site.querySelector('.strip'), qIn = site.querySelector('.s-in'), qX = site.querySelector('.s-x'), resEl = site.querySelector('.f-result');
   function norm(s) { var t = String(s == null ? '' : s); try { t = t.normalize('NFKC'); } catch (e) { } return t.toLowerCase(); }
@@ -336,7 +337,7 @@ function mountSite(root, S, src, opts) {
   function node(w) {
     if (nodes[w.id]) return nodes[w.id];
     var n = doc.createElement('button'); n.type = 'button'; n.className = 'work'; n.setAttribute('data-id', w.id);
-    n.setAttribute('aria-label', (w.title || w.no || '作品') + 'を拡大して見る');
+    n.setAttribute('aria-label', (w.title || w.no || '作品') + 'を拡大して見る' + (w.extra && w.extra.length ? '（差分' + w.extra.length + '枚）' : ''));
     var im = doc.createElement('img'); im.alt = w.title || ''; im.src = src(w.imgId) || '';
     var mt0 = S.imgs && S.imgs[w.imgId]; if (mt0 && mt0.w && mt0.h) { im.style.aspectRatio = mt0.w + '/' + mt0.h; n.style.setProperty('--r', String(mt0.w / mt0.h)); }
     n.appendChild(im);
@@ -345,6 +346,11 @@ function mountSite(root, S, src, opts) {
       if (w.no) { var cn = doc.createElement('span'); cn.className = 'no'; cn.textContent = w.no; c.appendChild(cn); }
       if (w.title) { var ct = doc.createElement('span'); ct.className = 't'; ct.textContent = w.title; c.appendChild(ct); }
       n.appendChild(c);
+    }
+    if (w.extra && w.extra.length) {
+      var vb = doc.createElement('span'); vb.className = 'vb'; vb.setAttribute('aria-hidden', 'true');
+      vb.innerHTML = '<svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="3.5" width="8" height="8" rx="1.5"/><path d="M4.5 1.5h6a2 2 0 0 1 2 2v6"/></svg>' + (w.extra.length + 1);
+      n.appendChild(vb);
     }
     nodes[w.id] = n; return n;
   }
@@ -394,11 +400,20 @@ function mountSite(root, S, src, opts) {
     }
     if (resEl) { resEl.hidden = !S.works.length; resEl.textContent = list.length + (S.texts.resultSuffix || ''); }
   }
+  function showVar(w, k) {
+    var ids = [w.imgId].concat(w.extra || []);
+    k = Math.max(0, Math.min(ids.length - 1, k));
+    mi.src = src(ids[k]) || ''; mi.alt = w.title || '';
+    mv.hidden = ids.length < 2; mcard.classList.toggle('has-vars', ids.length > 1);
+    mv.innerHTML = ids.length < 2 ? '' : ids.map(function (iid, j) {
+      return '<button type="button" class="m-var' + (j === k ? ' is-on' : '') + '" data-v="' + j + '" aria-label="' + (j + 1) + '枚目を見る" aria-pressed="' + (j === k) + '"><img alt="" src="' + esc(src(iid) || '') + '"></button>';
+    }).join('');
+  }
   function show(i) {
     if (!list.length) return;
     cur = (i + list.length) % list.length;
     var w = list[cur];
-    mi.src = src(w.imgId) || ''; mi.alt = w.title || '';
+    showVar(w, 0);
     mt.textContent = w.title || ''; mt.hidden = !w.title;
     var noEl = modal.querySelector('.m-no'); noEl.textContent = w.no ? 'No. ' + w.no : ''; noEl.hidden = !w.no;
     md.textContent = w.desc || ''; md.hidden = !w.desc;
@@ -459,7 +474,11 @@ function mountSite(root, S, src, opts) {
     var a = e.target && e.target.closest ? e.target.closest('a[data-page]') : null, pv = window.SITE_PREVIEW;
     if (a && pv && typeof pv.go === 'function') { e.preventDefault(); pv.go(a.getAttribute('data-page'), a.getAttribute('data-hash') || ''); }
   });
-  modal.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-close]')) closeM(); });
+  modal.addEventListener('click', function (e) {
+    var vb = e.target.closest ? e.target.closest('.m-var') : null;
+    if (vb && list[cur]) { showVar(list[cur], +vb.getAttribute('data-v')); return; }
+    if (e.target.closest && e.target.closest('[data-close]')) closeM();
+  });
   modal.querySelector('.prev').addEventListener('click', function () { show(cur - 1); });
   modal.querySelector('.next').addEventListener('click', function () { show(cur + 1); });
   doc.addEventListener('keydown', function (e) {
