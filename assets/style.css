@@ -282,3 +282,5 @@ html{scroll-behavior:auto}
 .site .fm-done{text-align:center;padding:16px 0 4px}
 .site .fm-done p{color:var(--ink-2);text-wrap:pretty}
 @media (max-width:600px){.site .fm-f input,.site .fm-f select,.site .fm-f textarea{font-size:16px}}
+
+.site .cm-sites{margin-top:clamp(28px,5vw,40px);text-align:center}.site .cm-sl2{font-size:13px;letter-spacing:.14em;opacity:.7;margin:0 0 14px}.site .cm-sk{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 28px;margin:0}
