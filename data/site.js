@@ -66,12 +66,12 @@ window.SITE_DATA = {
   ],
   "categories": [
     {
-      "id": "5o7dx5429qsc",
-      "name": "Skebリクエスト"
-    },
-    {
       "id": "commission",
       "name": "ご依頼作品"
+    },
+    {
+      "id": "5o7dx5429qsc",
+      "name": "Skebリクエスト"
     }
   ],
   "styles": [
