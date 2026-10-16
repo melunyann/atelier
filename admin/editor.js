@@ -400,6 +400,9 @@ function panelCommission() {
       cmCtl('block', b, i, C.blocks.length) + '</article>';
   });
   h += '<div class="row" style="margin-top:12px">' + ['ご依頼の流れ', 'お支払い方法', '注意事項', ''].map(function (t) { return '<button type="button" class="btn-s" data-act="add-cm-block" data-t="' + t + '">' + (t ? '「' + t + '」を追加' : '空のブロックを追加') + '</button>'; }).join('') + '</div></section>';
+  h += '<section class="ed-card"><h2>各サイトへのリンク</h2><p class="ed-hint">フォームの下に、「各サイト経由でのご相談はこちらから」と、文字リンクが並びます。URLを入れたサイトだけが表示されます（https:// から始まるURL）。</p>' +
+    tin('commission.sites.tsunagu', 'つなぐ のURL', { type: 'url', ph: 'https://...' }) + tin('commission.sites.artlink', 'Art link のURL', { type: 'url', ph: 'https://...' }) + tin('commission.sites.coconala', 'ココナラ のURL', { type: 'url', ph: 'https://...' }) +
+    tin('texts.sitesLead', '案内の文') + '<div class="pair">' + tin('texts.siteTsunagu', 'つなぐ の表示名') + tin('texts.siteArtlink', 'Art link の表示名') + '</div>' + tin('texts.siteCoconala', 'ココナラ の表示名') + '</section>';
   var fm = C.form;
   h += '<section class="ed-card"><h2>ご依頼フォーム</h2><p class="ed-hint">ご依頼ページ下の「ご依頼・お問い合わせ」ボタンを押すと、フォームが開きます。フォームの内容を受け取る方法を選んでください。プレビューでは、送信されません（公開したページで試してください）。</p>' +
     field('受け取り方', '<select data-path="commission.form.mode">' + [['none', 'フォームを使わない（ボタンは「文字」タブのURLへ移動します）'], ['service', 'フォームサービスで受け取る（メールで届きます）'], ['mail', '送る人のメールアプリで送ってもらう']].map(function (o) { return '<option value="' + o[0] + '"' + (fm.mode === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>');
