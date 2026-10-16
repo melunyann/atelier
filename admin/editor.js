@@ -78,7 +78,7 @@ var S = null, pubSig = '', saving = false, queued = false, dirty = false, saveEr
 var tab = 'profile', addCat = '', addYear = String(new Date().getFullYear()), addStyle = '', addPlan = '', armed = null, armTimer = 0, previewDoc = '', previewPage = 'home', previewHash = '', previewMode = 'pc', memOnly = false;
 var blobs = {};
 var baseState = null, gh = { repo: '', branch: '', dir: '', token: '' }, ghState = '';
-var TABS = [['profile', 'プロフィール'], ['works', '作品'], ['commission', 'ご依頼'], ['text', '文字'], ['design', 'デザイン'], ['publish', '公開'], ['github', '接続']];
+var TABS = [['profile', 'プロフィール'], ['works', '作品'], ['commission', 'ご依頼'], ['guideline', 'ガイドライン'], ['text', '文字'], ['design', 'デザイン'], ['publish', '公開'], ['github', '接続']];
 
 host.innerHTML =
   '<header class="ed-bar"><div class="ed-top"><div class="ed-brand">melune<small>編集ツール</small></div><div class="ed-status" id="ed-status" role="status"></div></div>' +
@@ -348,7 +348,7 @@ function panelWorks() {
   });
   return h + '</section>';
 }
-function cmOwner(kind, id) { var arr = kind === 'plan' ? S.commission.plans : S.commission.blocks; return arr.filter(function (x) { return x.id === id; })[0]; }
+function cmOwner(kind, id) { var arr = kind === 'plan' ? S.commission.plans : S.commission.blocks.concat(S.guideline.blocks); return arr.filter(function (x) { return x.id === id; })[0]; }
 function cmThumbs(kind, o) {
   if (!o.imgs.length) return '<p class="ed-hint" style="margin:6px 0">画像はまだありません。</p>';
   return '<div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0">' + o.imgs.map(function (iid, j) {
@@ -362,6 +362,26 @@ function cmThumbs(kind, o) {
 function cmCtl(kind, o, i, n) {
   return '<div class="row"><button type="button" class="btn-s" data-act="cm-' + kind + '-up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="cm-' + kind + '-down" data-i="' + i + '"' + (i === n - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
     '<button type="button" class="btn-d" data-act="rm-cm-' + kind + '" data-id="' + o.id + '">削除</button></div>';
+}
+function gdCtl(o, i, n) {
+  return '<div class="row"><button type="button" class="btn-s" data-act="gd-block-up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="gd-block-down" data-i="' + i + '"' + (i === n - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
+    '<button type="button" class="btn-d" data-act="rm-gd-block" data-id="' + o.id + '">削除</button></div>';
+}
+function panelGuideline() {
+  var G = S.guideline, box = 'border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:12px;background:#fff';
+  var h = '<section class="ed-card"><h2>ガイドラインページ</h2><p class="ed-hint">ご依頼ページとは別の、独立したページです。ご依頼の注意事項・禁止事項などを書きます。内容を入れると、メニューに「Guideline」が増え、ご依頼ページからも案内のリンクが出ます。何も入れていないあいだは、メニューにも出ません。</p>' +
+    tin('guideline.intro', 'ページの説明文（いちばん上に出ます）', { area: 1, rows: 3 }) + '</section>';
+  h += '<section class="ed-card"><h2>ガイドラインの項目</h2><p class="ed-hint">見出しと文章のブロックです。必要な数だけ追加できます。画像も付けられます（透かしは付きません）。上から順に並びます。</p>';
+  G.blocks.forEach(function (b, i) {
+    h += '<article style="' + box + '">' + field('見出し', '<input type="text" data-cb="' + b.id + '" data-k="title" value="' + esc(b.title) + '" placeholder="例：ご依頼をお受けできないもの">') +
+      field('文章', '<textarea rows="6" data-cb="' + b.id + '" data-k="body" placeholder="改行はそのまま反映されます">' + esc(b.body) + '</textarea>') +
+      '<div class="f"><span style="font-size:12px;color:var(--mute)">画像（任意・複数可）</span>' + cmThumbs('block', b) +
+      '<label class="btn-s">画像を追加<input type="file" accept="image/*" multiple hidden data-file="cm-block" data-id="' + b.id + '"></label></div>' +
+      gdCtl(b, i, G.blocks.length) + '</article>';
+  });
+  h += '<div class="row" style="margin-top:12px">' + ['注意事項', '禁止事項', '著作権・二次利用について', ''].map(function (t) { return '<button type="button" class="btn-s" data-act="add-gd-block" data-t="' + t + '">' + (t ? '「' + t + '」を追加' : '空のブロックを追加') + '</button>'; }).join('') + '</div></section>';
+  h += '<section class="ed-card"><h2>ページの文字</h2>' + '<div class="pair">' + tin('texts.guidelineEn', '大見出し') + tin('texts.guidelineJa', '小見出し') + '</div>' + tin('texts.menuGuideline', 'メニューの項目名') + tin('texts.guidelineLink', 'ご依頼ページの案内リンクの文') + '</section>';
+  return h;
 }
 function schedMonths() {
   var d = new Date(), out = [];
@@ -478,7 +498,7 @@ function panelPublish() {
 }
 function renderTabs() { elTabs.innerHTML = TABS.map(function (t) { return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (t[0] === tab ? 'true' : 'false') + '">' + t[1] + '</button>'; }).join(''); }
 function renderPanel() {
-  var fn = { profile: panelProfile, works: panelWorks, commission: panelCommission, text: panelText, design: panelDesign, publish: panelPublish, github: panelGithub }[tab];
+  var fn = { profile: panelProfile, works: panelWorks, commission: panelCommission, guideline: panelGuideline, text: panelText, design: panelDesign, publish: panelPublish, github: panelGithub }[tab];
   elPanel.innerHTML = fn(); hydrate();
 }
 function hydrate() {
@@ -548,7 +568,7 @@ function movePlan(i, d) { var j = i + d; if (j < 0 || j >= S.plans.length) retur
 function moveStyle(i, d) { var j = i + d; if (j < 0 || j >= S.styles.length) return; var t = S.styles[i]; S.styles[i] = S.styles[j]; S.styles[j] = t; touch(); renderPanel(); }
 function moveCat(i, d) { var j = i + d; if (j < 0 || j >= S.categories.length) return; var t = S.categories[i]; S.categories[i] = S.categories[j]; S.categories[j] = t; touch(); renderPanel(); }
 function closeOv() { elOv.hidden = true; elOv.innerHTML = ''; previewDoc = ''; previewPage = 'home'; previewHash = ''; }
-async function setPreviewPage(p, h) { previewPage = (p === 'gallery' || p === 'commission') ? p : 'home'; previewHash = h || ''; try { previewDoc = await buildPreviewDoc(); showFrame(); } catch (e) { } }
+async function setPreviewPage(p, h) { previewPage = (p === 'gallery' || p === 'commission' || p === 'guideline') ? p : 'home'; previewHash = h || ''; try { previewDoc = await buildPreviewDoc(); showFrame(); } catch (e) { } }
 window.addEventListener('message', function (e) { var d = e.data, fr = elOv && elOv.querySelector ? elOv.querySelector('iframe') : null; if (d && d.meluneGo && fr && e.source === fr.contentWindow) setPreviewPage(d.meluneGo, d.hash); });
 
 async function buildPreviewDoc() {
@@ -564,7 +584,7 @@ async function openPreview(mode) {
   previewMode = mode || previewMode;
   elOv.hidden = false;
   elOv.innerHTML = '<div class="pv"><div class="pv-bar"><div class="seg" role="group" aria-label="表示の切り替え"><button type="button" data-pv="pc" aria-pressed="' + (previewMode === 'pc') + '">PC</button><button type="button" data-pv="sp" aria-pressed="' + (previewMode === 'sp') + '">スマホ</button></div>' +
-    '<div class="seg" role="group" aria-label="ページの切り替え"><button type="button" data-pvpage="home" aria-pressed="' + (previewPage === 'home') + '">トップ</button><button type="button" data-pvpage="gallery" aria-pressed="' + (previewPage === 'gallery') + '">全作品ページ</button><button type="button" data-pvpage="commission" aria-pressed="' + (previewPage === 'commission') + '">ご依頼ページ</button></div>' +
+    '<div class="seg" role="group" aria-label="ページの切り替え"><button type="button" data-pvpage="home" aria-pressed="' + (previewPage === 'home') + '">トップ</button><button type="button" data-pvpage="gallery" aria-pressed="' + (previewPage === 'gallery') + '">全作品ページ</button><button type="button" data-pvpage="commission" aria-pressed="' + (previewPage === 'commission') + '">ご依頼ページ</button><button type="button" data-pvpage="guideline" aria-pressed="' + (previewPage === 'guideline') + '">ガイドライン</button></div>' +
     '<span class="pv-note">下書きの内容です。まだ公開ページには反映されていません。</span><button type="button" class="btn-s" data-act="pv-close">閉じる</button><button type="button" class="btn-p" data-act="publish">サイトに反映</button></div>' +
     '<div class="pv-stage" id="pv-stage"><p class="ed-boot">読み込み中…</p></div></div>';
   try { await flush(); previewDoc = await buildPreviewDoc(); showFrame(); }
@@ -850,6 +870,17 @@ host.addEventListener('click', function (e) {
       break;
     case 'add-cm-plan': S.commission.plans.push({ id: uid(), name: '新しいプラン', mode: 'input', price: '', desc: '', imgs: [] }); touch(); renderPanel(); break;
     case 'add-cm-block': S.commission.blocks.push({ id: uid(), title: b.getAttribute('data-t') || '新しい項目', body: '', imgs: [] }); touch(); renderPanel(); break;
+    case 'add-gd-block': S.guideline.blocks.push({ id: uid(), title: b.getAttribute('data-t') || '新しい項目', body: '', imgs: [] }); touch(); renderPanel(); break;
+    case 'gd-block-up': case 'gd-block-down':
+      var gj = i + (/up$/.test(a) ? -1 : 1);
+      if (gj >= 0 && gj < S.guideline.blocks.length) { var gt = S.guideline.blocks[i]; S.guideline.blocks[i] = S.guideline.blocks[gj]; S.guideline.blocks[gj] = gt; touch(); renderPanel(); }
+      break;
+    case 'rm-gd-block':
+      if (arm(b)) {
+        var gk = S.guideline.blocks.findIndex(function (x) { return x.id === id; });
+        if (gk >= 0) { var ggone = S.guideline.blocks[gk].imgs.slice(); S.guideline.blocks.splice(gk, 1); ggone.forEach(releaseIfUnused); touch(); renderPanel(); }
+      }
+      break;
     case 'cm-plan-up': case 'cm-plan-down': case 'cm-block-up': case 'cm-block-down':
       var carr = a.indexOf('plan') >= 0 ? S.commission.plans : S.commission.blocks, cj = i + (/up$/.test(a) ? -1 : 1);
       if (cj >= 0 && cj < carr.length) { var ct = carr[i]; carr[i] = carr[cj]; carr[cj] = ct; touch(); renderPanel(); }
