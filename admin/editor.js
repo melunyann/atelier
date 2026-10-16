@@ -1,6 +1,3 @@
-/* melune 編集ツール（自分のパソコンで使う専用ページ）
-   - 編集内容（下書き）は、このブラウザの中に自動で保存されます。
-   - 「サイトに反映」を押すと、公開サイトに入れるファイル一式（ZIP）を書き出します。 */
 (function () {
 'use strict';
 
@@ -276,11 +273,23 @@ function fillNumbers() {
   for (var i = S.works.length - 1; i >= 0; i--) { var w = S.works[i]; if (w.year && !w.no) { w.no = nextNo(w.year); ch = true; } }
   return ch;
 }
+function wkThumbs(w) {
+  var ex = w.extra || [];
+  if (!ex.length) return '<p class="ed-hint" style="margin:4px 0">差分はありません。</p>';
+  return '<div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0">' + ex.map(function (iid, j) {
+    var at = ' data-id="' + w.id + '" data-i="' + j + '"';
+    return '<div style="width:92px"><div class="wk-thumb"><img data-load="' + esc(iid) + '" alt=""></div><div class="row" style="margin-top:4px;gap:2px;flex-wrap:nowrap">' +
+      '<button type="button" class="btn-s" data-act="wk-img-l"' + at + ' aria-label="前へ"' + (j === 0 ? ' disabled' : '') + '>←</button>' +
+      '<button type="button" class="btn-s" data-act="wk-img-r"' + at + ' aria-label="後ろへ"' + (j === ex.length - 1 ? ' disabled' : '') + '>→</button>' +
+      '<button type="button" class="btn-d" data-act="wk-img-x"' + at + ' aria-label="この差分を外す">×</button></div>' +
+      '<button type="button" class="btn-s" style="margin-top:4px;width:100%" data-act="wk-img-main"' + at + '>表紙にする</button></div>';
+  }).join('') + '</div>';
+}
 function panelWorks() {
   if (!S.categories.some(function (c) { return c.id === addCat; })) addCat = S.categories.length ? S.categories[S.categories.length - 1].id : '';
   if (addPlan && !S.plans.some(function (c) { return c.id === addPlan; })) addPlan = '';
   if (addStyle && !S.styles.some(function (c) { return c.id === addStyle; })) addStyle = '';
-  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます。新しく追加した作品は、作品一覧の先頭（いちばん上）に入ります。作品番号は、制作した年＋3桁の連番（例：2026001）が自動で付きます。年を「未設定」にすると、番号は付きません。ここで選んだカテゴリー・プラン・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
+  var h = '<section class="ed-card"><h2>作品を追加</h2><p class="ed-hint">縦横比はそのまま、長辺2000pxまでに自動で整えます。複数枚をまとめて選べます（1枚が1作品になります。差分は、追加した作品ごとの「差分画像」から足せます）。新しく追加した作品は、作品一覧の先頭（いちばん上）に入ります。作品番号は、制作した年＋3桁の連番（例：2026001）が自動で付きます。年を「未設定」にすると、番号は付きません。ここで選んだカテゴリー・プラン・年・絵柄が、追加する作品すべてに付きます（あとから1枚ずつ変えられます）。</p>' +
     '<div class="row"><label class="f" style="margin:0;min-width:140px"><span>カテゴリー</span><select class="f-in" id="add-cat">' + catOptions(addCat) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:140px"><span>プラン</span><select class="f-in" id="add-plan">' + planOptions(addPlan) + '</select></label>' +
     '<label class="f" style="margin:0;min-width:110px"><span>制作した年</span><select class="f-in" id="add-year">' + yearOptions(addYear) + '</select></label>' +
@@ -329,6 +338,8 @@ function panelWorks() {
       field('絵柄', '<select data-w="' + w.id + '" data-k="style">' + styleOptions(w.style) + '</select>') +
       field('作品番号', '<input type="text" data-w="' + w.id + '" data-k="no" value="' + esc(w.no || '') + '" placeholder="年を選ぶと自動で付きます" maxlength="16" spellcheck="false">') + '</div>' +
       (w.no && noCount[w.no] > 1 ? '<p class="ed-hint" style="color:#b4415a;margin:0 0 6px">この番号は、他の作品にも付いています。番号を変えてください。</p>' : '') +
+      '<div class="f"><span style="font-size:12px;color:var(--mute)">差分画像（ギャラリーでは表紙だけ並び、拡大すると切り替えて見られます）</span>' + wkThumbs(w) +
+      '<label class="btn-s">差分を追加<input type="file" accept="image/*" multiple hidden data-file="work-extra" data-id="' + w.id + '"></label></div>' +
       '<div class="row"><button type="button" class="btn-s" data-act="up" data-id="' + w.id + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="down" data-id="' + w.id + '"' + (i === S.works.length - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
       '<label class="btn-s">画像を差し替え<input type="file" accept="image/*" hidden data-file="replace" data-id="' + w.id + '"></label><button type="button" class="btn-d" data-act="rm-work" data-id="' + w.id + '">削除</button></div></div></article>';
   });
@@ -452,7 +463,18 @@ async function handleFiles(kind, files, id, input) {
   if (!arr.length) return;
   function why(e) { return e && e.message === 'type' ? '画像ファイルではありません。' : e && e.message === 'big' ? 'ファイルが大きすぎます。' : '読み込めない形式かもしれません。'; }
   try {
-    if (kind === 'cm-plan' || kind === 'cm-block') {
+    if (kind === 'work-extra') {
+      var wx = S.works.filter(function (x) { return x.id === id; })[0], okW = 0;
+      if (wx) {
+        wx.extra = wx.extra || [];
+        for (var xi = 0; xi < arr.length; xi++) {
+          setBusy('差分を読み込み中… (' + (xi + 1) + '/' + arr.length + ')');
+          try { var xid = await addImage(arr[xi], 2000, 0.88, wmText()); wx.extra.push(xid); okW++; touch(); }
+          catch (e) { toast('「' + arr[xi].name + '」を追加できませんでした。' + why(e), true); }
+        }
+        if (okW) toast(okW + '枚の差分を追加しました');
+      }
+    } else if (kind === 'cm-plan' || kind === 'cm-block') {
       var cow = cmOwner(kind === 'cm-plan' ? 'plan' : 'block', id), okC = 0;
       if (cow) {
         for (var ci = 0; ci < arr.length; ci++) {
@@ -471,7 +493,7 @@ async function handleFiles(kind, files, id, input) {
         setBusy('作品を読み込み中… (' + (i + 1) + '/' + arr.length + ')');
         try {
           var iid = await addImage(arr[i], 2000, 0.88, wmText());
-          S.works.splice(okN, 0, { id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan, no: nextNo(addYear) }); okN++; touch();
+          S.works.splice(okN, 0, { id: uid(), imgId: iid, title: '', desc: '', cat: addCat, year: addYear, style: addStyle, plan: addPlan, no: nextNo(addYear), extra: [] }); okN++; touch();
         } catch (e) { toast('「' + arr[i].name + '」を追加できませんでした。' + why(e), true); }
       }
       if (okN) toast(okN + '枚の作品を追加しました');
@@ -812,6 +834,15 @@ host.addEventListener('click', function (e) {
         touch(); renderPanel();
       }
       break;
+    case 'wk-img-l': case 'wk-img-r': case 'wk-img-x': case 'wk-img-main':
+      var wk2 = S.works.filter(function (x) { return x.id === id; })[0];
+      if (wk2 && wk2.extra) {
+        if (a === 'wk-img-x') { var rid2 = wk2.extra.splice(i, 1)[0]; releaseIfUnused(rid2); }
+        else if (a === 'wk-img-main') { var oldMain = wk2.imgId; wk2.imgId = wk2.extra[i]; wk2.extra[i] = oldMain; }
+        else { var wj = i + (a === 'wk-img-l' ? -1 : 1); if (wj >= 0 && wj < wk2.extra.length) { var wt = wk2.extra[i]; wk2.extra[i] = wk2.extra[wj]; wk2.extra[wj] = wt; } }
+        touch(); renderPanel();
+      }
+      break;
     case 'rm-hero': if (arm(b)) { var o = S.heroId; S.heroId = null; releaseIfUnused(o); touch(); renderPanel(); } break;
     case 'rm-icon': if (arm(b)) { var o2 = S.iconId; S.iconId = null; releaseIfUnused(o2); touch(); renderPanel(); } break;
     case 'add-link': S.links.push({ label: '', url: '' }); touch(); renderPanel(); break;
@@ -841,7 +872,7 @@ host.addEventListener('click', function (e) {
     case 'up': moveWork(id, -1); break;
     case 'down': moveWork(id, 1); break;
     case 'rm-work':
-      if (arm(b)) { var k = S.works.findIndex(function (w) { return w.id === id; }); if (k >= 0) { var im = S.works[k].imgId; S.works.splice(k, 1); releaseIfUnused(im); touch(); renderPanel(); } }
+      if (arm(b)) { var k = S.works.findIndex(function (w) { return w.id === id; }); if (k >= 0) { var im = S.works[k].imgId, exs = (S.works[k].extra || []).slice(); S.works.splice(k, 1); releaseIfUnused(im); exs.forEach(releaseIfUnused); touch(); renderPanel(); } }
       break;
     case 'reset-colors': S.design.text = '#493843'; S.design.bg = '#FFF9F8'; S.design.accent = '#EBA4B7'; touch(); renderPanel(); break;
     case 'discard': if (arm(b)) discardDraft(); break;
