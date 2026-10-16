@@ -275,11 +275,11 @@ function commissionHTML(S) {
   C.blocks.forEach(function (b) {
     h += '<div class="cm-block">' + (b.title ? '<h2 class="cm-h">' + esc(b.title) + '</h2>' : '') + (b.body ? '<p class="cm-body">' + esc(b.body) + '</p>' : '') + cmImgs(b.imgs, b.title, false) + '</div>';
   });
-  if (S.guideline.intro || S.guideline.blocks.length) h += '<p class="cm-gl"><a class="tlink" href="../guideline/index.html" data-page="guideline"><span>' + esc(T.guidelineLink || 'ガイドラインをご確認ください') + '</span>' + CHEV + '</a></p>';
   if (useForm) h += '<div class="more-wrap cm-apply"><button type="button" class="btn" data-form-open>' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</button></div>';
   else if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
   var sl = [['tsunagu', T.siteTsunagu || 'つなぐ'], ['artlink', T.siteArtlink || 'Art link'], ['coconala', T.siteCoconala || 'ココナラ']].filter(function (x) { return C.sites[x[0]]; });
   if (sl.length) h += '<div class="cm-sites">' + (T.sitesLead ? '<p class="cm-sl2">' + esc(T.sitesLead) + '</p>' : '') + '<p class="cm-sk">' + sl.map(function (x) { return '<a class="tlink" href="' + esc(C.sites[x[0]]) + '" target="_blank" rel="noopener noreferrer"><span>' + esc(x[1]) + '</span></a>'; }).join('') + '</p></div>';
+  if (S.guideline.intro || S.guideline.blocks.length) h += '<p class="cm-gl"><a class="tlink" href="../guideline/index.html" data-page="guideline"><span>' + esc(T.guidelineLink || 'ガイドラインをご確認ください') + '</span></a></p>';
   h += '</section>';
   return h + (useForm ? formHTML(S) : '');
 }
