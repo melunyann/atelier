@@ -66,12 +66,12 @@ window.SITE_DATA = {
   ],
   "categories": [
     {
-      "id": "commission",
-      "name": "ご依頼作品"
-    },
-    {
       "id": "5o7dx5429qsc",
       "name": "Skebリクエスト"
+    },
+    {
+      "id": "commission",
+      "name": "ご依頼作品"
     }
   ],
   "styles": [
@@ -327,9 +327,128 @@ window.SITE_DATA = {
       "w": 1853,
       "h": 2000,
       "file": "img-yczvis4uowle.webp"
+    },
+    "cb9rhb35psn2": {
+      "w": 2000,
+      "h": 1419,
+      "file": "img-cb9rhb35psn2.webp"
+    },
+    "go7aepq7q1lt": {
+      "w": 1818,
+      "h": 2000,
+      "file": "img-go7aepq7q1lt.webp"
+    },
+    "uft8jndzq3sw": {
+      "w": 1818,
+      "h": 2000,
+      "file": "img-uft8jndzq3sw.webp"
+    },
+    "7242yslzq5pn": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-7242yslzq5pn.webp"
+    },
+    "rqgojllmq7il": {
+      "w": 1818,
+      "h": 2000,
+      "file": "img-rqgojllmq7il.webp"
+    },
+    "bzk54lqtq8xp": {
+      "w": 1818,
+      "h": 2000,
+      "file": "img-bzk54lqtq8xp.webp"
+    },
+    "jziwpve7qaee": {
+      "w": 1000,
+      "h": 1200,
+      "file": "img-jziwpve7qaee.webp"
     }
   },
   "works": [
+    {
+      "id": "r4yd779vqaeg",
+      "imgId": "jziwpve7qaee",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "",
+      "plan": "",
+      "no": "2026007",
+      "extra": []
+    },
+    {
+      "id": "dccn7gojq8yt",
+      "imgId": "bzk54lqtq8xp",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "",
+      "plan": "",
+      "no": "2026006",
+      "extra": []
+    },
+    {
+      "id": "ww2u6vo5q7jp",
+      "imgId": "rqgojllmq7il",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "",
+      "plan": "",
+      "no": "2026005",
+      "extra": []
+    },
+    {
+      "id": "cvn4f3f8q5qr",
+      "imgId": "7242yslzq5pn",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "",
+      "plan": "",
+      "no": "2026004",
+      "extra": []
+    },
+    {
+      "id": "46l96c5pq3tz",
+      "imgId": "uft8jndzq3sw",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "",
+      "plan": "",
+      "no": "2026003",
+      "extra": []
+    },
+    {
+      "id": "fg1dq3drq1mx",
+      "imgId": "go7aepq7q1lt",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "",
+      "plan": "",
+      "no": "2026002",
+      "extra": []
+    },
+    {
+      "id": "hszxa6mhpso6",
+      "imgId": "cb9rhb35psn2",
+      "title": "",
+      "desc": "",
+      "cat": "",
+      "year": "2026",
+      "style": "",
+      "plan": "",
+      "no": "2026001",
+      "extra": []
+    },
     {
       "id": "s9vhwwu50hqd",
       "imgId": "eq7j3jon0hp8",
