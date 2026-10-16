@@ -13,7 +13,7 @@ window.SITE_DATA = {
     "closeLabel": "閉じる",
     "commissionEn": "Commission",
     "commissionBody": "イラストのご依頼を受け付けています。\nお見積りのみでもお気軽にご相談ください。\n描き込み一枚絵・立ち絵のご相談は、納期に余裕を持ってご相談いただきますようお願いいたします。\n\n受付先\n・X DM、メール\n・つなぐ、ココナラ　\n・Art Link（以下のボタン）\n\n受付状況やプランなどの細かな内容は、以下のボタンよりご確認をお願いいたします。",
-    "commissionButton": "ご依頼について",
+    "commissionButton": "詳細",
     "commissionUrl": "https://melunyann.github.io/atelier/commission/index.html",
     "footer": "© 2026 melune",
     "filterLabelCat": "カテゴリー",
@@ -23,7 +23,6 @@ window.SITE_DATA = {
     "yearSuffix": "年",
     "noMatchText": "この条件に合う作品は、まだありません。",
     "sortLabel": "並び順",
-    "sortManual": "おすすめ順",
     "sortNew": "新しい順",
     "sortOld": "古い順",
     "moreLabel": "絞り込み",
@@ -38,7 +37,19 @@ window.SITE_DATA = {
     "commissionEmpty": "ご依頼ページは準備中です。もうすこしだけお待ちください。",
     "viewAllLabel": "もっと見る",
     "searchPlaceholder": "タイトル・番号・キーワードで検索",
-    "resultSuffix": "件"
+    "resultSuffix": "件",
+    "scheduleLabel": "受付状況",
+    "markOpen": "受付中",
+    "markMaybe": "内容によります",
+    "markClosed": "受付終了",
+    "statusInProgress": "現在の作業中",
+    "statusDone": "実績数",
+    "countSuffix": "件",
+    "formTitle": "ご依頼フォーム",
+    "formNote": "ご依頼の流れ・注意事項をご確認のうえ、ご記入ください。",
+    "formAgree": "ご依頼の流れ・注意事項を確認しました",
+    "formSend": "送信する",
+    "formThanks": "送信しました。内容を確認して、ご連絡します。しばらくお待ちください。"
   },
   "activities": [
     "キャラクターイラスト",
@@ -138,6 +149,7 @@ window.SITE_DATA = {
         "mode": "input",
         "price": "胸上 1,500円 / 腰上 2,500円",
         "desc": "- ラフ提出なし\n- スクエアサイズ（1,500px 144dpi）\n- 商用不可 / 個人利用のみ",
+        "busy": "",
         "imgs": []
       },
       {
@@ -146,6 +158,7 @@ window.SITE_DATA = {
         "mode": "input",
         "price": "胸上 2,000円 / 腰上 3,500円",
         "desc": "- ラフ提出なし\n- 1名あたりの金額です\n- 非公開対応 +1,500円\n　フルサイズでの公開が不可能な全てのご依頼に適用されます\n- 商用利用 +3,000円～",
+        "busy": "",
         "imgs": []
       },
       {
@@ -154,6 +167,7 @@ window.SITE_DATA = {
         "mode": "input",
         "price": "5,500円～",
         "desc": "- 1名あたりの金額です\n- ラフ提出有\n- 非公開対応 +1,500円\n　フルサイズでの公開が不可能な全てのご依頼に適用されます\n- 商用利用 +3,000円～",
+        "busy": "",
         "imgs": []
       }
     ],
@@ -170,7 +184,22 @@ window.SITE_DATA = {
         "body": "1. ご相談\nDM、メールなどからご依頼内容をご相談ください。\n\n2. お見積り\nご依頼内容をもとにお見積りを作成します。\nご予算がある際には事前の提示をお願いいたします。\nまた、キャンセルや内容の変更は原則この段階までとなります。\n\n3. 受注、お支払い\n受注後にスケジュール確保、お支払い確認後の着手となります。\nお支払いは請求書発行から5日以内にお願いしております。期日内のお支払いが難しい場合には、お支払い可能な日付のご連絡をお願いいたします。\n\n4. ラフご確認\n指定納期の最大7日前までにラフを提出いたします。\n基本的な修正はこの段階までです。\n※簡易、シンプルイラストはラフ提出がございません。\n\n5. 完成品ご確認\n大幅な修正は対応できかねます。\n\n6. 納品\n納品データをお渡しいたします。\nDMでのご依頼の場合、ファイルなう または GDrive にて納品いたします。\n不備がございましたら1週間以内にご連絡をお願いいたします。",
         "imgs": []
       }
-    ]
+    ],
+    "schedule": {
+      "2026-10": "x",
+      "2026-11": "o",
+      "2026-12": "o",
+      "2027-01": "o",
+      "2027-02": "o",
+      "2027-03": "o"
+    },
+    "inProgress": "",
+    "done": "",
+    "form": {
+      "mode": "none",
+      "endpoint": "",
+      "mailTo": ""
+    }
   },
   "showMenu": true,
   "topCat": "commission",
