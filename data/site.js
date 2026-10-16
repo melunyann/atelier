@@ -407,9 +407,77 @@ window.SITE_DATA = {
       "w": 2000,
       "h": 1667,
       "file": "img-g7tald4mzzby.webp"
+    },
+    "g656k9gq1u6s": {
+      "w": 2000,
+      "h": 1500,
+      "file": "img-g656k9gq1u6s.webp"
+    },
+    "p9p7jvty1wgb": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-p9p7jvty1wgb.webp"
+    },
+    "w1jrw3s01zht": {
+      "w": 2000,
+      "h": 1499,
+      "file": "img-w1jrw3s01zht.webp"
+    },
+    "57rjae5r212j": {
+      "w": 1642,
+      "h": 2000,
+      "file": "img-57rjae5r212j.webp"
     }
   },
   "works": [
+    {
+      "id": "5zud3a4s213n",
+      "imgId": "57rjae5r212j",
+      "title": "",
+      "desc": "",
+      "cat": "",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "172i2eqjm6oi",
+      "no": "2026015",
+      "extra": []
+    },
+    {
+      "id": "gdp1ai5c1zhv",
+      "imgId": "w1jrw3s01zht",
+      "title": "",
+      "desc": "",
+      "cat": "",
+      "year": "2026",
+      "style": "xizbontb5zoi",
+      "plan": "plan-single",
+      "no": "2026014",
+      "extra": []
+    },
+    {
+      "id": "mp1p2gcn1wgd",
+      "imgId": "p9p7jvty1wgb",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "8kvuspn1lja2",
+      "no": "2026013",
+      "extra": []
+    },
+    {
+      "id": "a7n0hemx1u6u",
+      "imgId": "g656k9gq1u6s",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "zfyr6ffd64zf",
+      "plan": "plan-single",
+      "no": "2026012",
+      "extra": []
+    },
     {
       "id": "29zcxzfczhak",
       "imgId": "kiy0w9r2zh9h",
@@ -429,7 +497,7 @@ window.SITE_DATA = {
       "imgId": "g7tald4mzzby",
       "title": "",
       "desc": "",
-      "cat": "commission",
+      "cat": "",
       "year": "2026",
       "style": "xizbontb5zoi",
       "plan": "plan-single",
@@ -441,7 +509,7 @@ window.SITE_DATA = {
       "imgId": "febewg0nz7t4",
       "title": "",
       "desc": "",
-      "cat": "commission",
+      "cat": "",
       "year": "2026",
       "style": "d8mzgfjh5v5u",
       "plan": "xpsun5ly2k0o",
@@ -507,7 +575,7 @@ window.SITE_DATA = {
       "imgId": "7242yslzq5pn",
       "title": "",
       "desc": "",
-      "cat": "commission",
+      "cat": "",
       "year": "2026",
       "style": "zfyr6ffd64zf",
       "plan": "172i2eqjm6oi",
