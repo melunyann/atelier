@@ -363,10 +363,24 @@ function cmCtl(kind, o, i, n) {
   return '<div class="row"><button type="button" class="btn-s" data-act="cm-' + kind + '-up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑ 前へ</button><button type="button" class="btn-s" data-act="cm-' + kind + '-down" data-i="' + i + '"' + (i === n - 1 ? ' disabled' : '') + '>↓ 後ろへ</button>' +
     '<button type="button" class="btn-d" data-act="rm-cm-' + kind + '" data-id="' + o.id + '">削除</button></div>';
 }
+function schedMonths() {
+  var d = new Date(), out = [];
+  for (var i = 0; i < 6; i++) { var x = new Date(d.getFullYear(), d.getMonth() + i, 1), mm = x.getMonth() + 1; out.push({ key: x.getFullYear() + '-' + (mm < 10 ? '0' : '') + mm, label: x.getFullYear() + '年' + mm + '月' }); }
+  return out;
+}
 function panelCommission() {
   var C = S.commission, box = 'border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:12px;background:#fff';
   var h = '<section class="ed-card"><h2>ご依頼ページ</h2><p class="ed-hint">メニューの「Commission」から開く、ご依頼のページです。プランと、流れ・お支払い方法・注意事項などのブロックを入れると、メニューが「準備中」から開けるようになり、トップのご依頼セクションのボタンも、このページへ進みます。ご依頼・お問い合わせ先のURL（フォームなど）は、「文字」タブの「ご依頼セクション」に入れます。ページの下にボタンで出ます。</p>' +
     tin('commission.intro', 'ページの説明文（いちばん上に出ます）', { area: 1, rows: 4 }) + '</section>';
+  h += '<section class="ed-card"><h2>受付状況（月ごと）</h2><p class="ed-hint">月ごとに「〇・△・×」を選びます。公開ページには、見た日の月から3か月分が表にして出ます（月が変わると、自動で次の月に進みます）。トップでは〇・△・×の記号、ご依頼ページでは、下の言葉で表示します。先の月も、あらかじめ入れておけます。どの月も未設定のあいだは、表は出ません。</p>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 12px">' + schedMonths().map(function (m) {
+      return field(m.label, '<select data-sc="' + m.key + '">' + [['', '未設定'], ['o', '〇'], ['t', '△'], ['x', '×']].map(function (o) { return '<option value="' + o[0] + '"' + ((C.schedule[m.key] || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>');
+    }).join('') + '</div>' +
+    tin('texts.scheduleLabel', '表の見出し') +
+    '<div class="pair">' + tin('texts.markOpen', '〇のときの言葉（ご依頼ページ）') + tin('texts.markMaybe', '△のときの言葉（ご依頼ページ）') + '</div>' + tin('texts.markClosed', '×のときの言葉（ご依頼ページ）') + '</section>';
+  h += '<section class="ed-card"><h2>現在の状況</h2><p class="ed-hint">ご依頼ページの、受付状況の表の下に出ます。数字だけ入れると、後ろに「件」が付きます。空のものは表示しません。作業中の件数は、全体でも、プランごと（下の各プランの欄）でも入れられます。両方入れても、どちらか一方でもかまいません。</p>' +
+    '<div class="pair">' + tin('commission.inProgress', '現在の作業中の件数（全体）', { ph: '例：2' }) + tin('commission.done', '実績数（まとめて）', { ph: '例：35' }) + '</div>' +
+    '<div class="pair">' + tin('texts.statusInProgress', '「作業中」の見出し') + tin('texts.statusDone', '「実績数」の見出し') + '</div>' + tin('texts.countSuffix', '数字の後ろに付ける文字（例：件）') + '</section>';
   h += '<section class="ed-card"><h2>プラン</h2><p class="ed-hint">プランごとに、「入力式」か「画像式」を選べます。入力式は、名前・料金・説明文・サンプル画像を入力します。画像式は、自分で作った料金表やプラン紹介の画像を、そのまま載せます（名前は空でもかまいません）。入力式のサンプル画像には、「作品」タブの透かしが付きます。画像式の画像には付きません。</p>';
   C.plans.forEach(function (p, i) {
     var inp = p.mode !== 'image';
@@ -374,6 +388,7 @@ function panelCommission() {
       field('見せ方', '<select data-cp="' + p.id + '" data-k="mode"><option value="input"' + (inp ? ' selected' : '') + '>入力式（料金・説明文・サンプル画像）</option><option value="image"' + (!inp ? ' selected' : '') + '>画像式（作った画像をそのまま載せる）</option></select>') + '</div>' +
       (inp ? field('料金', '<input type="text" data-cp="' + p.id + '" data-k="price" value="' + esc(p.price) + '" placeholder="例：3,000円〜">') +
         field('説明文', '<textarea rows="4" data-cp="' + p.id + '" data-k="desc" placeholder="内容・納期・オプションなど">' + esc(p.desc) + '</textarea>') : '') +
+      field('現在の作業中の件数（このプラン。空なら表示しません）', '<input type="text" data-cp="' + p.id + '" data-k="busy" value="' + esc(p.busy || '') + '" placeholder="例：2">') +
       '<div class="f"><span style="font-size:12px;color:var(--mute)">' + (inp ? 'サンプル画像（複数可）' : 'プランの画像（複数可。上から順に並びます）') + '</span>' + cmThumbs('plan', p) +
       '<label class="btn-s">画像を追加<input type="file" accept="image/*" multiple hidden data-file="cm-plan" data-id="' + p.id + '"></label></div>' +
       cmCtl('plan', p, i, C.plans.length) + '</article>';
@@ -388,6 +403,17 @@ function panelCommission() {
       cmCtl('block', b, i, C.blocks.length) + '</article>';
   });
   h += '<div class="row" style="margin-top:12px">' + ['ご依頼の流れ', 'お支払い方法', '注意事項', ''].map(function (t) { return '<button type="button" class="btn-s" data-act="add-cm-block" data-t="' + t + '">' + (t ? '「' + t + '」を追加' : '空のブロックを追加') + '</button>'; }).join('') + '</div></section>';
+  var fm = C.form;
+  h += '<section class="ed-card"><h2>ご依頼フォーム</h2><p class="ed-hint">ご依頼ページ下の「ご依頼・お問い合わせ」ボタンを押すと、フォームが開きます。フォームの内容を受け取る方法を選んでください。プレビューでは、送信されません（公開したページで試してください）。</p>' +
+    field('受け取り方', '<select data-path="commission.form.mode">' + [['none', 'フォームを使わない（ボタンは「文字」タブのURLへ移動します）'], ['service', 'フォームサービスで受け取る（メールで届きます）'], ['mail', '送る人のメールアプリで送ってもらう']].map(function (o) { return '<option value="' + o[0] + '"' + (fm.mode === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>');
+  if (fm.mode === 'service') h += tin('commission.form.endpoint', 'フォームサービスの送信先URL', { type: 'url', ph: 'https://formspree.io/f/xxxxxxxx' }) +
+    '<p class="ed-hint" style="margin-top:6px">たとえば「Formspree」などのフォームサービスに登録して、フォームを1つ作ると、「https://」から始まる送信先のURLが発行されます。それをここに貼ります。届いた内容は、登録したメールアドレスに届きます。送られた内容は、そのサービスを通って届きます。無料枠は件数に上限があるので、サービスの案内を確認してください。https:// から始まるURLだけ使えます。</p>';
+  if (fm.mode === 'mail') h += tin('commission.form.mailTo', '受け取るメールアドレス', { type: 'email' }) +
+    '<p class="ed-hint" style="margin-top:6px">送る人が「送信する」を押すと、その人のメールアプリが開き、書いた内容が入った状態で出てきます。送るのは、その人です。そのため、メールアプリを使わない人には向きません。メールアドレスは、公開ページのデータに含まれ、誰でも見られます。</p>';
+  if (fm.mode !== 'none') h += tin('texts.formTitle', 'フォームの見出し') + tin('texts.formNote', 'フォームの説明文', { area: 1, rows: 2 }) + tin('texts.formAgree', '確認チェックの文') +
+    '<div class="pair">' + tin('texts.formSend', '送信ボタンの文字') + tin('texts.commissionApply', '「ご依頼」ボタンの文字') + '</div>' + tin('texts.formThanks', '送信後に出す文', { area: 1, rows: 2 }) +
+    '<p class="ed-hint" style="margin-top:6px">フォームの項目は、お名前・ご連絡先・ご希望のプラン・ご依頼の内容・ご希望の納期・参考資料のURL・確認のチェックです。プランの選択肢は、上の「プラン」の名前から作られます。</p>';
+  h += '</section>';
   return h;
 }
 function panelText() {
@@ -405,9 +431,9 @@ function panelText() {
   h += '<section class="ed-card"><h2>メニュー（ハンバーガーメニュー）</h2><p class="ed-hint">公開ページの右上に出る「三」のボタンの中身です。「Gallery」は今のページのギャラリーへ、「Commission」は下のご依頼セクションへ移動します。ご依頼セクションのリンク先URLが空のあいだ、「Commission」は「準備中」と表示されます。</p>' +
     '<label class="chk"><input type="checkbox" data-path="showMenu"' + (S.showMenu ? ' checked' : '') + '>右上にメニューボタンを表示する</label>' +
     '<div class="pair">' + tin('texts.menuHome', '1番目の項目（ページの先頭へ）') + tin('texts.menuGallery', '2番目の項目（ギャラリーへ）') + '</div>' + tin('texts.menuCommission', '3番目の項目（ご依頼へ）') + '</section>';
-  h += '<section class="ed-card"><h2>ご依頼セクション</h2><p class="ed-hint">トップのギャラリーの下に出るご依頼の案内です。「ご依頼」タブにプランや項目を入れると、ボタンはご依頼ページへ進みます（まだ何も入れていないあいだは、下のリンク先URLへ進みます）。リンク先URLは、ご依頼ページの下にも「ご依頼・お問い合わせ」のボタンで出ます。</p>' +
+  h += '<section class="ed-card"><h2>ご依頼セクション</h2><p class="ed-hint">トップのギャラリーの下に出る、ご依頼の案内です。受付状況の表は、「ご依頼」タブで入れます。「詳細」の文字リンクは、「ご依頼」タブにプランや項目を入れると、ご依頼ページへ進みます（まだ何も入れていないあいだは、下のリンク先URLへ進みます）。ご依頼フォームを使わないときは、このURLが、ご依頼ページ下の「ご依頼・お問い合わせ」ボタンの行き先にもなります。</p>' +
     tin('texts.commissionEn', '見出し') + tin('texts.commissionBody', '説明文', { area: 1, rows: 3 }) +
-    '<div class="pair">' + tin('texts.commissionButton', 'ボタンの文字') + tin('texts.commissionUrl', 'ボタンのリンク先URL', { type: 'url', ph: 'https://...' }) + '</div></section>';
+    '<div class="pair">' + tin('texts.commissionButton', '文字リンクの文字（例：詳細）') + tin('texts.commissionUrl', 'リンク先URL（外部のフォームなど）', { type: 'url', ph: 'https://...' }) + '</div></section>';
   h += '<section class="ed-card"><h2>フッター</h2>' + tin('texts.footer', 'フッターの文字') + '</section>';
   h += '<p class="ed-hint" style="padding:0 6px">活動名・キャッチコピー・紹介文は「プロフィール」タブ、作品のタイトルと説明は「作品」タブで変更できます。</p>';
   return h;
@@ -760,6 +786,7 @@ function onInput(e) {
       Array.prototype.forEach.call(host.querySelectorAll('[data-path="' + d.path + '"]'), function (o) { if (o !== t) o.value = v; });
     }
     pathSet(S, d.path, v);
+    if (d.path === 'commission.form.mode') { touch(); renderPanel(); return; }
     if (/^design\./.test(d.path) || /^texts\.(siteName|tagline|intro)$/.test(d.path)) updateSample();
     touch();
   } else if (d.list === 'activities') { S.activities = t.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); touch(); }
@@ -767,6 +794,7 @@ function onInput(e) {
   else if (d.cat !== undefined) { var c = S.categories[+d.cat]; if (c) { c.name = t.value; syncOpt(c.id, t.value); touch(); } }
   else if (d.pln !== undefined) { var pc = S.plans[+d.pln]; if (pc) { pc.name = t.value; syncOpt(pc.id, t.value); touch(); } }
   else if (d.sty !== undefined) { var sc = S.styles[+d.sty]; if (sc) { sc.name = t.value; syncOpt(sc.id, t.value); touch(); } }
+  else if (d.sc) { if (t.value) S.commission.schedule[d.sc] = t.value; else delete S.commission.schedule[d.sc]; touch(); }
   else if (d.cp !== undefined || d.cb !== undefined) {
     var co = cmOwner(d.cp !== undefined ? 'plan' : 'block', d.cp !== undefined ? d.cp : d.cb);
     if (co) { co[d.k] = t.value; touch(); if (d.k === 'mode') renderPanel(); }
