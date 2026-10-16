@@ -225,3 +225,8 @@ html{scroll-behavior:auto}
 .site .m-card.has-vars .m-img img{max-height:calc(100vh - 300px)}
 .site.nosave .m-var img{pointer-events:none}
 @media (max-width:600px){.site .m-card.has-vars .m-img img{max-height:calc(100vh - 280px)}.site .m-var{width:46px;height:46px}}
+
+/* top page: arrow at the end of the strip */
+.site .strip-next{flex:0 0 auto;align-self:center;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 80%,transparent);color:var(--ink);text-decoration:none;transition:background .2s,border-color .2s,transform .2s;margin:0 4px 0 2px}
+.site .strip-next:hover{background:var(--tint);border-color:var(--tint-2);transform:translateX(3px)}
+.site .strip-next:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
