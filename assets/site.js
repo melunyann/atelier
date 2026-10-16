@@ -47,7 +47,7 @@ function defaultState() {
       sortLabel: '並び順', sortNew: '新しい順', sortOld: '古い順',
       moreLabel: '絞り込み', clearLabel: '選択を解除',
       menuHome: 'Home', menuGallery: 'Gallery', menuCommission: 'Commission',
-      commissionJa: 'ご依頼について', commissionPlanEn: 'Plan', commissionPlanJa: 'プラン', commissionApply: 'ご依頼・お問い合わせ', commissionEmpty: 'ご依頼ページは準備中です。もうすこしだけお待ちください。',
+      commissionJa: 'ご依頼について', commissionPlanEn: 'Plan', commissionPlanJa: 'プラン', commissionApply: 'ご依頼・お問い合わせ', sitesLead: '各サイト経由でのご相談はこちらから', siteTsunagu: 'つなぐ', siteArtlink: 'Art link', siteCoconala: 'ココナラ', commissionEmpty: 'ご依頼ページは準備中です。もうすこしだけお待ちください。',
       viewAllLabel: 'もっと見る', searchPlaceholder: 'タイトル・番号・キーワードで検索', resultSuffix: '件',
       scheduleLabel: '受付状況', markOpen: '受付中', markMaybe: '内容による', markClosed: '受付終了',
       statusInProgress: '現在の作業中', statusDone: '実績数', countSuffix: '件',
@@ -59,7 +59,7 @@ function defaultState() {
     styles: [],
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'new', showSort: true, defaultCat: 'commission',
-    commission: { intro: '', plans: [], blocks: [], schedule: {}, inProgress: '', done: '', form: { mode: 'none', endpoint: '', mailTo: '' } },
+    commission: { intro: '', plans: [], blocks: [], schedule: {}, inProgress: '', done: '', sites: { tsunagu: '', artlink: '', coconala: '' }, form: { mode: 'none', endpoint: '', mailTo: '' } },
     showMenu: true, topCat: 'commission', topCount: 6,
     protect: { noSave: true, wm: true, wmText: 'melune sample', wmColor: 'white' },
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
@@ -108,12 +108,13 @@ function normalizeState(raw) {
   s.works = Array.isArray(raw.works) ? raw.works.filter(function (w) { return w && w.id && w.imgId; }).map(function (w) {
     return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || ''), no: String(w.no || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16), extra: Array.isArray(w.extra) ? w.extra.map(String).filter(function (x) { return /^[0-9A-Za-z_-]+$/.test(x) && x !== String(w.imgId); }) : [] };
   }) : [];
-  s.commission = { intro: '', plans: [], blocks: [], schedule: {}, inProgress: '', done: '', form: { mode: 'none', endpoint: '', mailTo: '' } };
+  s.commission = { intro: '', plans: [], blocks: [], schedule: {}, inProgress: '', done: '', sites: { tsunagu: '', artlink: '', coconala: '' }, form: { mode: 'none', endpoint: '', mailTo: '' } };
   var rc = raw.commission;
   if (rc && typeof rc === 'object') {
     var cid = function (a) { return Array.isArray(a) ? a.map(String).filter(function (x) { return /^[0-9A-Za-z_-]+$/.test(x); }) : []; };
     if (typeof rc.intro === 'string') s.commission.intro = rc.intro;
     if (rc.schedule && typeof rc.schedule === 'object') Object.keys(rc.schedule).forEach(function (k) { if (/^\d{4}-\d{2}$/.test(k) && ['o', 't', 'x'].indexOf(rc.schedule[k]) >= 0) s.commission.schedule[k] = rc.schedule[k]; });
+    ['tsunagu', 'artlink', 'coconala'].forEach(function (k) { s.commission.sites[k] = safeUrl(rc.sites && rc.sites[k]); });
     s.commission.inProgress = String(rc.inProgress == null ? '' : rc.inProgress).slice(0, 12);
     s.commission.done = String(rc.done == null ? '' : rc.done).slice(0, 12);
     if (rc.form && typeof rc.form === 'object') {
@@ -267,6 +268,8 @@ function commissionHTML(S) {
   });
   if (useForm) h += '<div class="more-wrap cm-apply"><button type="button" class="btn" data-form-open>' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</button></div>';
   else if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
+  var sl = [['tsunagu', T.siteTsunagu || 'つなぐ'], ['artlink', T.siteArtlink || 'Art link'], ['coconala', T.siteCoconala || 'ココナラ']].filter(function (x) { return C.sites[x[0]]; });
+  if (sl.length) h += '<div class="cm-sites">' + (T.sitesLead ? '<p class="cm-sl2">' + esc(T.sitesLead) + '</p>' : '') + '<p class="cm-sk">' + sl.map(function (x) { return '<a class="tlink" href="' + esc(C.sites[x[0]]) + '" target="_blank" rel="noopener noreferrer"><span>' + esc(x[1]) + '</span>' + CHEV + '</a>'; }).join('') + '</p></div>';
   h += '</section>';
   return h + (useForm ? formHTML(S) : '');
 }
