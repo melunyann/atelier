@@ -212,7 +212,7 @@ window.SITE_DATA = {
   },
   "design": {
     "headFont": "serif",
-    "bodyFont": "maru",
+    "bodyFont": "gothic",
     "weight": "normal",
     "italic": false,
     "text": "#493843",
