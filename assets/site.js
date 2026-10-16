@@ -44,7 +44,7 @@ function defaultState() {
       footer: '© 2026 melune',
       filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', filterLabelPlan: 'プラン', yearSuffix: '年',
       noMatchText: 'この条件に合う作品は、まだありません。',
-      sortLabel: '並び順', sortManual: 'おすすめ順', sortNew: '新しい順', sortOld: '古い順',
+      sortLabel: '並び順', sortNew: '新しい順', sortOld: '古い順',
       moreLabel: '絞り込み', clearLabel: '選択を解除',
       menuHome: 'Home', menuGallery: 'Gallery', menuCommission: 'Commission',
       commissionJa: 'ご依頼について', commissionPlanEn: 'Plan', commissionPlanJa: 'プラン', commissionApply: 'ご依頼・お問い合わせ', commissionEmpty: 'ご依頼ページは準備中です。もうすこしだけお待ちください。',
@@ -55,7 +55,7 @@ function defaultState() {
     categories: [{ id: 'commission', name: 'ご依頼作品' }, { id: 'original', name: '自主制作' }],
     styles: [],
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
-    sort: 'manual', showSort: true, defaultCat: 'commission',
+    sort: 'new', showSort: true, defaultCat: 'commission',
     commission: { intro: '', plans: [], blocks: [] },
     showMenu: true, topCat: 'commission', topCount: 6,
     protect: { noSave: true, wm: true, wmText: 'melune sample', wmColor: 'white' },
@@ -80,7 +80,7 @@ function normalizeState(raw) {
     t.italic = !!d.italic;
     t.text = col(d.text, t.text); t.bg = col(d.bg, t.bg); t.accent = col(d.accent, t.accent);
   }
-  s.sort = ['manual', 'new', 'old'].indexOf(raw.sort) >= 0 ? raw.sort : 'manual';
+  s.sort = raw.sort === 'old' ? 'old' : 'new';
   s.showSort = raw.showSort !== false;
   var dc = typeof raw.defaultCat === 'string' ? raw.defaultCat : 'commission';
   s.defaultCat = (dc === 'all' || s.categories.some(function (c) { return c.id === dc; })) ? dc : 'all';
@@ -150,9 +150,25 @@ function startCat(S) {
   return S.works.some(function (w) { return w.cat === c; }) ? c : 'all';
 }
 
+/* 作品番号（年＋連番。例：2026001）で並べます。番号のない作品は最後です。 */
+function noKey(w) { var m = /^(\d{4})(\d+)$/.exec(w.no || ''); return m ? [+m[1], +m[2]] : null; }
+function sortByNo(list, sort) {
+  var dir = sort === 'old' ? 1 : -1;
+  return list.map(function (w, i) { return { w: w, i: i }; }).sort(function (a, b) {
+    var ka = noKey(a.w), kb = noKey(b.w);
+    if (!ka && !kb) return a.i - b.i;
+    if (!ka) return 1;
+    if (!kb) return -1;
+    if (ka[0] !== kb[0]) return (ka[0] - kb[0]) * dir;
+    if (ka[1] !== kb[1]) return (ka[1] - kb[1]) * dir;
+    return a.i - b.i;
+  }).map(function (o) { return o.w; });
+}
+
 function topList(S) {
   var c = S.topCat, pool = (c === 'all' || !S.categories.some(function (x) { return x.id === c; })) ? S.works : S.works.filter(function (w) { return w.cat === c; });
   if (!pool.length) pool = S.works;
+  pool = sortByNo(pool, 'new');
   return pool.slice(0, Math.max(1, Math.min(12, parseInt(S.topCount, 10) || 6)));
 }
 
@@ -168,8 +184,8 @@ function filterGroups(S) {
   var used = {}; S.works.forEach(function (w) { if (w.style) used[w.style] = 1; });
   var sl = S.styles.filter(function (c) { return used[c.id]; });
   if (sl.length) groups.push({ g: 'style', label: T.filterLabelStyle, items: sl.map(function (c) { return { id: c.id, name: c.name }; }) });
-  var yc = Object.keys(ys).length;
-  if (S.showSort && yc > 1) groups.push({ g: 'sort', label: T.sortLabel, items: [{ id: 'manual', name: T.sortManual }, { id: 'new', name: T.sortNew }, { id: 'old', name: T.sortOld }] });
+  var nc = S.works.filter(function (w) { return noKey(w); }).length;
+  if (S.showSort && nc > 1) groups.push({ g: 'sort', label: T.sortLabel, items: [{ id: 'new', name: T.sortNew }, { id: 'old', name: T.sortOld }] });
   return groups;
 }
 
@@ -232,8 +248,7 @@ function siteHTML(S, page) {
   } else h += '<header class="gh"><a class="gh-name" href="../index.html" data-page="home">' + esc(name) + '</a></header>';
   var gHead = '<div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.galleryEn) + '</h2>' + (T.galleryJa ? '<p class="g-ja">' + esc(T.galleryJa) + '</p>' : '') + '</div>';
   if (page === 'home') {
-    h += '<section class="gallery" id="gallery">' + gHead + '<div class="strip"></div><p class="empty" hidden>' + esc(T.emptyText) + '</p>' +
-      (S.works.length ? '<div class="more-wrap"><a class="btn" href="gallery/index.html" data-page="gallery">' + esc(T.viewAllLabel || 'もっと見る') + '</a></div>' : '') + '</section>';
+    h += '<section class="gallery" id="gallery">' + gHead + '<div class="strip"></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
   } else if (page === 'gallery') {
     h += '<section class="gallery gp" id="gallery">' + gHead;
     h += '<div class="search"><svg class="s-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="9" r="5.6"/><path d="M13.3 13.3 17 17"/></svg><input type="search" class="s-in" placeholder="' + esc(T.searchPlaceholder || '') + '" aria-label="' + esc(T.searchPlaceholder || '作品を検索') + '" autocomplete="off" enterkeyhint="search"><button type="button" class="s-x" hidden aria-label="入力を消す">&times;</button></div>';
@@ -361,6 +376,10 @@ function mountSite(root, S, src, opts) {
       empty.hidden = false; list = []; return;
     }
     list = topList(S); list.forEach(function (w) { strip.appendChild(node(w)); }); empty.hidden = true;
+    var nx = doc.createElement('a'); nx.className = 'strip-next'; nx.href = 'gallery/index.html'; nx.setAttribute('data-page', 'gallery');
+    nx.setAttribute('aria-label', S.texts.viewAllLabel || 'もっと見る'); nx.title = S.texts.viewAllLabel || 'もっと見る';
+    nx.innerHTML = '<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 3.5 14 10l-6.5 6.5"/></svg>';
+    strip.appendChild(nx);
   }
   function layoutCommission() {
     list = [];
@@ -384,16 +403,7 @@ function mountSite(root, S, src, opts) {
       PH_RATIOS.forEach(function (r) { var d = doc.createElement('div'); d.className = 'ph'; d.setAttribute('aria-hidden', 'true'); d.style.aspectRatio = String(1 / r); d.innerHTML = '<span class="pt">' + PETAL + '</span>'; put(d, r); });
       empty.hidden = false;
     } else {
-      if (filter.sort !== 'manual') {
-        var dir = filter.sort === 'new' ? -1 : 1;
-        list = list.map(function (w, i) { return { w: w, i: i }; }).sort(function (a, b) {
-          var ya = a.w.year ? +a.w.year : null, yb = b.w.year ? +b.w.year : null;
-          if (ya === null && yb === null) return a.i - b.i;
-          if (ya === null) return 1;
-          if (yb === null) return -1;
-          return ya !== yb ? (ya - yb) * dir : a.i - b.i;
-        }).map(function (o) { return o.w; });
-      }
+      list = sortByNo(list, filter.sort);
       list.forEach(function (w) { put(node(w), imgRatio(S, w.imgId)); });
       empty.textContent = S.texts.noMatchText || '';
       empty.hidden = list.length > 0;
