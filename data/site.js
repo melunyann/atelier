@@ -12,7 +12,7 @@ window.SITE_DATA = {
     "emptyText": "作品は準備中です。もうすこしだけお待ちください。",
     "closeLabel": "閉じる",
     "commissionEn": "Commission",
-    "commissionBody": "イラストのご依頼を受け付けています。\nお見積りのみでもお気軽にご相談ください。\n\n受付先\n・X DM、メール\n・つなぐ、ココナラ　\n・Art Link\n\nご依頼に関する細かな内容は、以下からご確認をお願いいたします。",
+    "commissionBody": "イラストのご依頼を受け付けています。\nお見積りのみでもお気軽にご相談ください。\n\n【受付先】\nX DM、メール\nつなぐ、ココナラ、Art Link\n\nご依頼に関する細かな内容は、以下からご確認をお願いいたします。\nなお、Skebでの金額は料金表の限りではありません。",
     "commissionButton": "詳細",
     "commissionUrl": "https://melunyann.github.io/atelier/commission/index.html",
     "footer": "melune（めるね）",
@@ -34,6 +34,10 @@ window.SITE_DATA = {
     "commissionPlanEn": "Plan",
     "commissionPlanJa": "プラン",
     "commissionApply": "ご依頼・お問い合わせ",
+    "sitesLead": "サイト経由でのご相談はこちらから",
+    "siteTsunagu": "つなぐ",
+    "siteArtlink": "Art link",
+    "siteCoconala": "ココナラ",
     "commissionEmpty": "ご依頼ページは準備中です。もうすこしだけお待ちください。",
     "viewAllLabel": "もっと見る",
     "searchPlaceholder": "タイトル・番号・キーワードで検索",
@@ -195,6 +199,11 @@ window.SITE_DATA = {
     },
     "inProgress": "6",
     "done": "188",
+    "sites": {
+      "tsunagu": "https://tsunagu.cloud/users/melunyann",
+      "artlink": "https://goartlink.com/artists/melunyann",
+      "coconala": "https://coconala.com/users/2652886"
+    },
     "form": {
       "mode": "mail",
       "endpoint": "",
