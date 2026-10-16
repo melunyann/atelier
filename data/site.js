@@ -49,7 +49,7 @@ window.SITE_DATA = {
     "formNote": "ご依頼の流れ・注意事項をご確認のうえ、ご記入ください。",
     "formAgree": "ご依頼の流れ・注意事項を確認しました",
     "formSend": "送信する",
-    "formThanks": "送信しました。内容を確認して、ご連絡します。しばらくお待ちください。"
+    "formThanks": "送信しました。\n内容を確認後、1週間以内にご連絡いたします。"
   },
   "activities": [
     "キャラクターイラスト",
@@ -193,12 +193,12 @@ window.SITE_DATA = {
       "2027-02": "o",
       "2027-03": "o"
     },
-    "inProgress": "",
-    "done": "",
+    "inProgress": "6",
+    "done": "188",
     "form": {
-      "mode": "none",
+      "mode": "mail",
       "endpoint": "",
-      "mailTo": ""
+      "mailTo": "melune25@gmail.com"
     }
   },
   "showMenu": true,
