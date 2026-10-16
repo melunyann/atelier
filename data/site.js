@@ -322,6 +322,11 @@ window.SITE_DATA = {
       "w": 1853,
       "h": 2000,
       "file": "img-eq7j3jon0hp8.webp"
+    },
+    "yczvis4uowle": {
+      "w": 1853,
+      "h": 2000,
+      "file": "img-yczvis4uowle.webp"
     }
   },
   "works": [
@@ -335,7 +340,9 @@ window.SITE_DATA = {
       "style": "",
       "plan": "",
       "no": "2025024",
-      "extra": []
+      "extra": [
+        "yczvis4uowle"
+      ]
     },
     {
       "id": "peyoy6hz0eq1",
