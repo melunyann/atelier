@@ -285,3 +285,5 @@ html{scroll-behavior:auto}
 @media (max-width:600px){.site .fm-f input,.site .fm-f select,.site .fm-f textarea{font-size:16px}}
 
 .site .cm-sites{margin-top:clamp(28px,5vw,40px);text-align:center}.site .cm-sl2{font-size:13px;letter-spacing:.14em;opacity:.7;margin:0 0 14px}.site .cm-sk{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 28px;margin:0}
+
+.site .cm-gl{text-align:center;margin:clamp(28px,5vw,40px) 0 0}
