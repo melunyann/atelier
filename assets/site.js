@@ -50,7 +50,7 @@ function defaultState() {
       sortLabel: '並び順', sortNew: '新しい順', sortOld: '古い順',
       moreLabel: '絞り込み', clearLabel: '選択を解除',
       menuHome: 'Home', menuGallery: 'Gallery', menuCommission: 'Commission',
-      commissionJa: 'ご依頼について', commissionPlanEn: 'Plan', commissionPlanJa: 'プラン', commissionApply: 'ご依頼・お問い合わせ', sitesLead: '各サイト経由でのご相談はこちらから', siteTsunagu: 'つなぐ', siteArtlink: 'Art link', siteCoconala: 'ココナラ', commissionEmpty: 'ご依頼ページは準備中です。もうすこしだけお待ちください。',
+      commissionJa: 'ご依頼について', guidelineEn: 'Guideline', guidelineJa: 'ガイドライン', guidelineEmpty: '準備中です。', guidelineLink: 'ご依頼の前に、ガイドラインをご確認ください', menuGuideline: 'Guideline', commissionPlanEn: 'Plan', commissionPlanJa: 'プラン', commissionApply: 'ご依頼・お問い合わせ', sitesLead: '各サイト経由でのご相談はこちらから', siteTsunagu: 'つなぐ', siteArtlink: 'Art link', siteCoconala: 'ココナラ', commissionEmpty: 'ご依頼ページは準備中です。もうすこしだけお待ちください。',
       viewAllLabel: 'もっと見る', searchPlaceholder: 'タイトル・番号・キーワードで検索', resultSuffix: '件',
       scheduleLabel: '受付状況', markOpen: '受付中', markMaybe: '内容による', markClosed: '受付終了',
       statusInProgress: '現在の作業中', statusDone: '実績数', countSuffix: '件',
@@ -63,6 +63,7 @@ function defaultState() {
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'new', showSort: true, defaultCat: 'commission',
     commission: { intro: '', plans: [], blocks: [], schedule: {}, inProgress: '', done: '', sites: { tsunagu: '', artlink: '', coconala: '' }, form: { mode: 'none', endpoint: '', mailTo: '' } },
+    guideline: { intro: '', blocks: [] },
     showMenu: true, topCat: 'commission', topCount: 6,
     protect: { noSave: true, wm: true, wmText: 'melune sample', wmColor: 'white' },
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
@@ -131,11 +132,19 @@ function normalizeState(raw) {
       return { id: String(b.id), title: String(b.title || ''), body: String(b.body || ''), imgs: cid(b.imgs) };
     });
   }
+  s.guideline = { intro: '', blocks: [] };
+  var rg = raw.guideline;
+  if (rg && typeof rg === 'object') {
+    if (typeof rg.intro === 'string') s.guideline.intro = rg.intro;
+    if (Array.isArray(rg.blocks)) s.guideline.blocks = rg.blocks.filter(function (b) { return b && b.id; }).map(function (b) {
+      return { id: String(b.id), title: String(b.title || ''), body: String(b.body || ''), imgs: Array.isArray(b.imgs) ? b.imgs.map(String).filter(function (x) { return /^[0-9A-Za-z_-]+$/.test(x); }) : [] };
+    });
+  }
   return s;
 }
 function refIds(S) {
   var out = [];
-  var cm = []; S.commission.plans.concat(S.commission.blocks).forEach(function (x) { cm = cm.concat(x.imgs); });
+  var cm = []; S.commission.plans.concat(S.commission.blocks, S.guideline.blocks).forEach(function (x) { cm = cm.concat(x.imgs); });
   var ex = []; S.works.forEach(function (w) { ex = ex.concat(w.extra || []); });
   [S.heroId, S.iconId].concat(S.works.map(function (w) { return w.imgId; })).concat(ex).concat(cm).forEach(function (id) { if (id && out.indexOf(id) < 0) out.push(id); });
   return out;
@@ -269,6 +278,7 @@ function commissionHTML(S) {
   C.blocks.forEach(function (b) {
     h += '<div class="cm-block">' + (b.title ? '<h2 class="cm-h">' + esc(b.title) + '</h2>' : '') + (b.body ? '<p class="cm-body">' + esc(b.body) + '</p>' : '') + cmImgs(b.imgs, b.title, false) + '</div>';
   });
+  if (S.guideline.intro || S.guideline.blocks.length) h += '<p class="cm-gl"><a class="tlink" href="../guideline/index.html" data-page="guideline"><span>' + esc(T.guidelineLink || 'ガイドラインをご確認ください') + '</span>' + CHEV + '</a></p>';
   if (useForm) h += '<div class="more-wrap cm-apply"><button type="button" class="btn" data-form-open>' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</button></div>';
   else if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
   var sl = [['tsunagu', T.siteTsunagu || 'つなぐ'], ['artlink', T.siteArtlink || 'Art link'], ['coconala', T.siteCoconala || 'ココナラ']].filter(function (x) { return C.sites[x[0]]; });
@@ -277,12 +287,24 @@ function commissionHTML(S) {
   return h + (useForm ? formHTML(S) : '');
 }
 
+function guidelineHTML(S) {
+  var T = S.texts, G = S.guideline;
+  var h = '<section class="gallery gp cm" id="guideline"><div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.guidelineEn) + '</h2>' + (T.guidelineJa ? '<p class="g-ja">' + esc(T.guidelineJa) + '</p>' : '') + '</div>';
+  if (!G.intro && !G.blocks.length) return h + '<p class="empty">' + esc(T.guidelineEmpty) + '</p></section>';
+  if (G.intro) h += '<p class="cm-intro">' + esc(G.intro) + '</p>';
+  G.blocks.forEach(function (b) {
+    h += '<div class="cm-block">' + (b.title ? '<h2 class="cm-h">' + esc(b.title) + '</h2>' : '') + (b.body ? '<p class="cm-body">' + esc(b.body) + '</p>' : '') + cmImgs(b.imgs, b.title, false) + '</div>';
+  });
+  return h + '</section>';
+}
+
 function siteHTML(S, page) {
-  page = page === 'gallery' || page === 'commission' ? page : 'home';
+  page = page === 'gallery' || page === 'commission' || page === 'guideline' ? page : 'home';
   var T = S.texts, name = T.siteName || '';
   var links = S.links.filter(function (l) { return safeUrl(l.url); });
   var tags = S.activities.filter(function (a) { return a && a.trim(); });
   var cta = safeUrl(T.commissionUrl), hasCm = !!(S.commission.plans.length || S.commission.blocks.length);
+  var hasGd = !!(S.guideline.intro || S.guideline.blocks.length);
   var h = '<div class="site" id="top" style="' + esc(siteVars(S)) + '">';
   if (S.showMenu) {
     var lh = T.menuHome || 'Home', lg = T.menuGallery || 'Gallery', lc = T.menuCommission || 'Commission';
@@ -291,6 +313,7 @@ function siteHTML(S, page) {
       pg('home', lh), pg('gallery', lg),
       hasCm ? pg('commission', lc) : !cta ? { l: lc, soon: true } : page === 'home' ? { l: lc, to: 'commission' } : { l: lc, href: '../index.html#commission', page: 'home', hash: 'commission' }
     ];
+    if (hasGd) items.push(pg('guideline', T.menuGuideline || 'Guideline'));
     h += '<button type="button" class="mb" aria-expanded="false" aria-controls="mn" aria-label="メニューを開く"><span class="mb-l" aria-hidden="true"></span><span class="mb-l" aria-hidden="true"></span><span class="mb-l" aria-hidden="true"></span></button>';
     h += '<nav class="mn" id="mn" hidden aria-label="メニュー"><div class="mn-back" data-mclose></div><div class="mn-in"><div class="orn" aria-hidden="true">' + BOW + '</div><ul class="mn-list">' +
       items.map(function (it) {
@@ -336,7 +359,7 @@ function siteHTML(S, page) {
   } else h += '<div class="filters" hidden></div>';
     h += '<p class="f-result" aria-live="polite" hidden></p><div class="cols"><div class="col"></div><div class="col"></div></div><p class="empty" hidden>' + esc(T.emptyText) + '</p></section>';
   } else {
-    h += commissionHTML(S);
+    h += page === 'guideline' ? guidelineHTML(S) : commissionHTML(S);
   }
 var schedTop = scheduleHTML(S, false);
   if ((cta || hasCm || schedTop) && page === 'home') {
@@ -354,7 +377,7 @@ var schedTop = scheduleHTML(S, false);
 }
 
 function mountSite(root, S, src, opts) {
-  var page = opts && (opts.page === 'gallery' || opts.page === 'commission') ? opts.page : 'home';
+  var page = opts && (opts.page === 'gallery' || opts.page === 'commission' || opts.page === 'guideline') ? opts.page : 'home';
   var doc = root.ownerDocument;
   root.innerHTML = siteHTML(S, page);
   Array.prototype.forEach.call(root.querySelectorAll('img[data-img]'), function (im) {
@@ -495,7 +518,7 @@ function mountSite(root, S, src, opts) {
     });
   }
   function layout() {
-    if (page === 'commission') { layoutCommission(); return; }
+    if (page === 'commission' || page === 'guideline') { layoutCommission(); return; }
     if (page === 'home') { layoutHome(); return; }
     list = S.works.filter(function (w) { return (filter.cat === 'all' || w.cat === filter.cat) && (!filter.plan.length || filter.plan.indexOf(w.plan) >= 0) && (!filter.year.length || filter.year.indexOf(w.year) >= 0) && (!filter.style.length || filter.style.indexOf(w.style) >= 0) && matchQ(w); });
     cols.forEach(function (c) { while (c.firstChild) c.removeChild(c.firstChild); });
@@ -623,7 +646,7 @@ if (root) {
     if (he && he.scrollIntoView) he.scrollIntoView();
   } catch (e) { }
   try {
-    document.title = pageName === 'gallery' ? ((S.texts.galleryEn || 'Gallery') + ' | ' + (S.texts.siteName || 'melune')) : pageName === 'commission' ? ((S.texts.commissionEn || 'Commission') + ' | ' + (S.texts.siteName || 'melune')) : (S.texts.siteName || 'melune');
+    document.title = pageName === 'gallery' ? ((S.texts.galleryEn || 'Gallery') + ' | ' + (S.texts.siteName || 'melune')) : pageName === 'commission' ? ((S.texts.commissionEn || 'Commission') + ' | ' + (S.texts.siteName || 'melune')) : pageName === 'guideline' ? ((S.texts.guidelineEn || 'Guideline') + ' | ' + (S.texts.siteName || 'melune')) : (S.texts.siteName || 'melune');
     document.body.style.background = col(S.design.bg, '#FFF9F8');
     var desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute('content', (S.texts.tagline ? S.texts.tagline + ' ' : '') + (S.texts.intro || ''));
