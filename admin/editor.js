@@ -1,3 +1,6 @@
+/* melune 編集ツール（自分のパソコンで使う専用ページ）
+   - 編集内容（下書き）は、このブラウザの中に自動で保存されます。
+   - 「サイトに反映」を押すと、公開サイトに入れるファイル一式（ZIP）を書き出します。 */
 (function () {
 'use strict';
 
@@ -312,7 +315,7 @@ function panelWorks() {
     h += '<div class="cat-row"><input type="text" data-sty="' + i + '" value="' + esc(c.name) + '" aria-label="絵柄の名前"><div class="row"><button type="button" class="btn-s" data-act="style-up" data-i="' + i + '" aria-label="前へ"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="btn-s" data-act="style-down" data-i="' + i + '" aria-label="後ろへ"' + (i === S.styles.length - 1 ? ' disabled' : '') + '>↓</button><button type="button" class="btn-d" data-act="rm-style" data-i="' + i + '">削除</button></div></div>';
   });
   h += '<div class="row"><button type="button" class="btn-s" data-act="add-style">絵柄を追加</button></div></section>';
-  h += '<section class="ed-card"><h2>トップページに出す作品</h2><p class="ed-hint">トップページには、選んだカテゴリーの作品を、作品一覧の上から数えて横並びで出します（新しく追加した作品が上に入るので、最新の作品になります）。絞り込みと検索は、「もっと見る」で開く全作品ページにだけ付きます。</p>' +
+  h += '<section class="ed-card"><h2>トップページに出す作品</h2><p class="ed-hint">トップページには、選んだカテゴリーの作品を、作品番号が新しい順（番号が大きい順）に、横並びで出します。画像の列の右端に「＞」の矢印が付き、押すと全作品ページが開きます。絞り込みと検索は、全作品ページにだけ付きます。</p>' +
     '<div class="pair">' + field('出すカテゴリー', '<select data-path="topCat"><option value="all"' + (S.topCat === 'all' ? ' selected' : '') + '>ALL（すべての作品）</option>' + S.categories.map(function (c) { return '<option value="' + esc(c.id) + '"' + (c.id === S.topCat ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select>') +
     field('出す枚数（1〜12）', '<input type="number" min="1" max="12" data-path="topCount" value="' + S.topCount + '">') + '</div></section>';
   h += '<section class="ed-card"><h2>画像の保護</h2><p class="ed-hint">完全に防ぐことはできませんが、気軽な保存や持ち出し、AIの学習への利用を防ぎやすくします。</p>' +
@@ -321,9 +324,9 @@ function panelWorks() {
     tin('protect.wmText', '透かしの文字') +
     field('透かしの色', '<select data-path="protect.wmColor">' + [['white', '白'], ['gray', '白に近いグレー'], ['pink', 'サイトのピンク（「デザイン」のアクセント色）']].map(function (o) { return '<option value="' + o[0] + '"' + (S.protect.wmColor === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') +
     '<p class="ed-hint" style="margin-top:6px">透かしは、これから追加する作品、または「画像を差し替え」した作品に付きます。色を変えたときも同じです（画像に焼き込みます）。すでに追加した作品には付かないので、入れ直してください。メイン画像とアイコンには付きません。外部のサービスやAIには送りません。</p></section>';
-  h += '<section class="ed-card"><h2>並び順</h2><p class="ed-hint">公開ページでの作品の並び方です。「新しい順」「古い順」は、作品に付けた制作年をもとにします。同じ年の作品は、下の作品一覧の並びのままです。年を付けていない作品は最後になります。</p>' +
-    field('最初に表示する並び順', '<select data-path="sort">' + [['manual', 'おすすめ順（作品一覧の並びのまま）'], ['new', '新しい順'], ['old', '古い順']].map(function (o) { return '<option value="' + o[0] + '"' + (S.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') +
-    '<label class="chk"><input type="checkbox" data-path="showSort"' + (S.showSort ? ' checked' : '') + '>訪問者が並び順を切り替えられるようにする（制作年が2種類以上あるときに表示）</label></section>';
+  h += '<section class="ed-card"><h2>並び順</h2><p class="ed-hint">公開ページでの作品の並び方は、作品番号をもとにします。「新しい順」は番号が大きい順（2026002 → 2026001 → 2025002 …）、「古い順」は番号が小さい順（2025001 → 2025002 → 2026001 …）です。番号のない作品は最後になります。同じ番号の作品は、下の作品一覧の並びのままです。</p>' +
+    field('最初に表示する並び順', '<select data-path="sort">' + [['new', '新しい順（番号が大きい順）'], ['old', '古い順（番号が小さい順）']].map(function (o) { return '<option value="' + o[0] + '"' + (S.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>') +
+    '<label class="chk"><input type="checkbox" data-path="showSort"' + (S.showSort ? ' checked' : '') + '>訪問者が並び順を切り替えられるようにする（番号の付いた作品が2つ以上あるときに表示）</label></section>';
   h += '<section class="ed-card"><h2>作品一覧（' + S.works.length + '）</h2>';
   if (!S.works.length) h += '<p class="empty-note">まだ作品がありません。上の「画像を選ぶ」から追加してください。<br>追加するまでは、公開ページに空のフレームが並びます。</p>';
   var noCount = {}; S.works.forEach(function (x) { if (x.no) noCount[x.no] = (noCount[x.no] || 0) + 1; });
@@ -396,9 +399,9 @@ function panelText() {
     '<div class="pair">' + tin('texts.yearSuffix', '年の後ろに付ける文字') + tin('texts.moreLabel', '「＋」ボタンの文字') + '</div>' +
     tin('texts.clearLabel', '選択解除ボタンの文字') +
     tin('texts.noMatchText', '該当する作品がないときの文') +
-    '<div class="pair">' + tin('texts.sortLabel', '並び順の見出し') + tin('texts.sortManual', '「おすすめ順」の文字') + '</div>' +
+    tin('texts.sortLabel', '並び順の見出し') +
     '<div class="pair">' + tin('texts.sortNew', '「新しい順」の文字') + tin('texts.sortOld', '「古い順」の文字') + '</div></section>';
-  h += '<section class="ed-card"><h2>トップ・全作品ページの文字</h2>' + tin('texts.viewAllLabel', 'トップの「もっと見る」ボタンの文字') + tin('texts.searchPlaceholder', '検索欄の案内文') + tin('texts.resultSuffix', '件数の後ろに付ける文字（例：件）') + '</section>';
+  h += '<section class="ed-card"><h2>トップ・全作品ページの文字</h2>' + tin('texts.viewAllLabel', 'トップの「＞」矢印の説明文（読み上げ・カーソルを乗せたときの表示）') + tin('texts.searchPlaceholder', '検索欄の案内文') + tin('texts.resultSuffix', '件数の後ろに付ける文字（例：件）') + '</section>';
   h += '<section class="ed-card"><h2>メニュー（ハンバーガーメニュー）</h2><p class="ed-hint">公開ページの右上に出る「三」のボタンの中身です。「Gallery」は今のページのギャラリーへ、「Commission」は下のご依頼セクションへ移動します。ご依頼セクションのリンク先URLが空のあいだ、「Commission」は「準備中」と表示されます。</p>' +
     '<label class="chk"><input type="checkbox" data-path="showMenu"' + (S.showMenu ? ' checked' : '') + '>右上にメニューボタンを表示する</label>' +
     '<div class="pair">' + tin('texts.menuHome', '1番目の項目（ページの先頭へ）') + tin('texts.menuGallery', '2番目の項目（ギャラリーへ）') + '</div>' + tin('texts.menuCommission', '3番目の項目（ご依頼へ）') + '</section>';
