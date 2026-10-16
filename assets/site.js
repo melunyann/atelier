@@ -43,7 +43,7 @@ function defaultState() {
       closeLabel: '閉じる',
       commissionEn: 'Commission',
       commissionBody: 'イラストのご依頼を受け付けています。\nご依頼の流れや条件は、下のボタンからご確認ください。',
-      commissionButton: 'ご依頼について', commissionUrl: '',
+      commissionButton: '詳細', commissionUrl: '',
       footer: '© 2026 melune',
       filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', filterLabelPlan: 'プラン', yearSuffix: '年',
       noMatchText: 'この条件に合う作品は、まだありません。',
@@ -51,7 +51,10 @@ function defaultState() {
       moreLabel: '絞り込み', clearLabel: '選択を解除',
       menuHome: 'Home', menuGallery: 'Gallery', menuCommission: 'Commission',
       commissionJa: 'ご依頼について', commissionPlanEn: 'Plan', commissionPlanJa: 'プラン', commissionApply: 'ご依頼・お問い合わせ', commissionEmpty: 'ご依頼ページは準備中です。もうすこしだけお待ちください。',
-      viewAllLabel: 'もっと見る', searchPlaceholder: 'タイトル・番号・キーワードで検索', resultSuffix: '件'
+      viewAllLabel: 'もっと見る', searchPlaceholder: 'タイトル・番号・キーワードで検索', resultSuffix: '件',
+      scheduleLabel: '受付状況', markOpen: '受付中', markMaybe: '内容による', markClosed: '受付終了',
+      statusInProgress: '現在の作業中', statusDone: '実績数', countSuffix: '件',
+      formTitle: 'ご依頼フォーム', formNote: 'ご依頼の流れ・注意事項をご確認のうえ、ご記入ください。', formAgree: 'ご依頼の流れ・注意事項を確認しました', formSend: '送信する', formThanks: '送信しました。内容を確認して、ご連絡します。しばらくお待ちください。'
     },
     activities: ['美少女イラスト制作', 'キャラクターデザイン', '創作キャラクターのビジュアル制作', 'イラストコミッション'],
     links: [],
@@ -59,7 +62,7 @@ function defaultState() {
     styles: [],
     plans: [{ id: 'plan-icon', name: 'アイコンイラスト' }, { id: 'plan-single', name: '一枚絵' }],
     sort: 'new', showSort: true, defaultCat: 'commission',
-    commission: { intro: '', plans: [], blocks: [] },
+    commission: { intro: '', plans: [], blocks: [], schedule: {}, inProgress: '', done: '', form: { mode: 'none', endpoint: '', mailTo: '' } },
     showMenu: true, topCat: 'commission', topCount: 6,
     protect: { noSave: true, wm: true, wmText: 'melune sample', wmColor: 'white' },
     design: { headFont: 'serif', bodyFont: 'gothic', weight: 'normal', italic: false, text: '#493843', bg: '#FFF9F8', accent: '#EBA4B7' },
@@ -70,6 +73,7 @@ function normalizeState(raw) {
   var s = defaultState();
   if (!raw || typeof raw !== 'object') return s;
   if (raw.texts && typeof raw.texts === 'object') Object.keys(s.texts).forEach(function (k) { if (typeof raw.texts[k] === 'string') s.texts[k] = raw.texts[k]; });
+  if (s.texts.commissionButton === 'ご依頼について') s.texts.commissionButton = '詳細';
   if (Array.isArray(raw.activities)) s.activities = raw.activities.filter(function (x) { return typeof x === 'string'; });
   if (Array.isArray(raw.links)) s.links = raw.links.filter(Boolean).map(function (l) { return { label: String(l.label || ''), url: String(l.url || '') }; });
   if (Array.isArray(raw.categories)) s.categories = raw.categories.filter(function (c) { return c && c.id; }).map(function (c) { return { id: String(c.id), name: String(c.name || '') }; });
@@ -107,13 +111,20 @@ function normalizeState(raw) {
   s.works = Array.isArray(raw.works) ? raw.works.filter(function (w) { return w && w.id && w.imgId; }).map(function (w) {
     return { id: String(w.id), imgId: String(w.imgId), title: String(w.title || ''), desc: String(w.desc || ''), cat: String(w.cat || ''), year: /^\d{4}$/.test(String(w.year || '')) ? String(w.year) : '', style: String(w.style || ''), plan: String(w.plan || ''), no: String(w.no || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 16), extra: Array.isArray(w.extra) ? w.extra.map(String).filter(function (x) { return /^[0-9A-Za-z_-]+$/.test(x) && x !== String(w.imgId); }) : [] };
   }) : [];
-  s.commission = { intro: '', plans: [], blocks: [] };
+  s.commission = { intro: '', plans: [], blocks: [], schedule: {}, inProgress: '', done: '', form: { mode: 'none', endpoint: '', mailTo: '' } };
   var rc = raw.commission;
   if (rc && typeof rc === 'object') {
     var cid = function (a) { return Array.isArray(a) ? a.map(String).filter(function (x) { return /^[0-9A-Za-z_-]+$/.test(x); }) : []; };
     if (typeof rc.intro === 'string') s.commission.intro = rc.intro;
+    if (rc.schedule && typeof rc.schedule === 'object') Object.keys(rc.schedule).forEach(function (k) { if (/^\d{4}-\d{2}$/.test(k) && ['o', 't', 'x'].indexOf(rc.schedule[k]) >= 0) s.commission.schedule[k] = rc.schedule[k]; });
+    s.commission.inProgress = String(rc.inProgress == null ? '' : rc.inProgress).slice(0, 12);
+    s.commission.done = String(rc.done == null ? '' : rc.done).slice(0, 12);
+    if (rc.form && typeof rc.form === 'object') {
+      var rf = rc.form, fmode = ['none', 'service', 'mail'].indexOf(rf.mode) >= 0 ? rf.mode : 'none';
+      s.commission.form = { mode: fmode, endpoint: /^https:\/\/[^\s"'<>]+$/i.test(String(rf.endpoint || '').trim()) ? String(rf.endpoint).trim() : '', mailTo: /^[^\s@,;"'<>]+@[^\s@,;"'<>]+\.[^\s@,;"'<>]+$/.test(String(rf.mailTo || '').trim()) ? String(rf.mailTo).trim() : '' };
+    }
     if (Array.isArray(rc.plans)) s.commission.plans = rc.plans.filter(function (p) { return p && p.id; }).map(function (p) {
-      return { id: String(p.id), name: String(p.name || ''), mode: p.mode === 'image' ? 'image' : 'input', price: String(p.price || ''), desc: String(p.desc || ''), imgs: cid(p.imgs) };
+      return { id: String(p.id), name: String(p.name || ''), mode: p.mode === 'image' ? 'image' : 'input', price: String(p.price || ''), desc: String(p.desc || ''), busy: String(p.busy == null ? '' : p.busy).slice(0, 12), imgs: cid(p.imgs) };
     });
     if (Array.isArray(rc.blocks)) s.commission.blocks = rc.blocks.filter(function (b) { return b && b.id; }).map(function (b) {
       return { id: String(b.id), title: String(b.title || ''), body: String(b.body || ''), imgs: cid(b.imgs) };
@@ -192,28 +203,75 @@ function filterGroups(S) {
   return groups;
 }
 
+var CHEV = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 3.5 14 10l-6.5 6.5"/></svg>';
+function cmCount(v, T) { v = String(v == null ? '' : v).trim(); if (!v) return ''; return /^\d+$/.test(v) ? v + (T.countSuffix || '') : v; }
+function cmCountHTML(v, T) { v = String(v == null ? '' : v).trim(); if (!v) return ''; return /^\d+$/.test(v) ? '<b>' + esc(v) + '</b><small>' + esc(T.countSuffix || '') + '</small>' : esc(v); }
+function scheduleMonths() {
+  var d = new Date(), out = [];
+  for (var i = 0; i < 3; i++) { var x = new Date(d.getFullYear(), d.getMonth() + i, 1), mm = x.getMonth() + 1; out.push({ key: x.getFullYear() + '-' + (mm < 10 ? '0' : '') + mm, label: mm + '月' }); }
+  return out;
+}
+function scheduleHTML(S, words) {
+  var sc = S.commission.schedule, ms = scheduleMonths(), T = S.texts;
+  if (!ms.some(function (m) { return sc[m.key]; })) return '';
+  var map = { o: ['〇', T.markOpen], t: ['△', T.markMaybe], x: ['×', T.markClosed] };
+  return '<div class="sc">' + (T.scheduleLabel ? '<p class="sc-l">' + esc(T.scheduleLabel) + '</p>' : '') + '<table class="sc-t' + (words ? ' words' : '') + '"><thead><tr>' +
+    ms.map(function (m) { return '<th scope="col">' + m.label + '</th>'; }).join('') + '</tr></thead><tbody><tr>' +
+    ms.map(function (m) {
+      var k = sc[m.key], v = map[k];
+      return '<td' + (k ? ' data-m="' + k + '"' : '') + '>' + (v ? (words ? esc(v[1]) : '<span aria-hidden="true">' + v[0] + '</span><span class="sr-only">' + esc(v[1]) + '</span>') : '<span class="sc-none" aria-hidden="true">—</span>') + '</td>';
+    }).join('') + '</tr></tbody></table></div>';
+}
+function formUsable(S) { var f = S.commission.form; return (f.mode === 'service' && !!f.endpoint) || (f.mode === 'mail' && !!f.mailTo); }
+function formHTML(S) {
+  var T = S.texts, f = S.commission.form;
+  var opts = '<option value="">未定・相談したい</option>' + S.commission.plans.filter(function (p) { return p.name; }).map(function (p) { return '<option>' + esc(p.name) + '</option>'; }).join('');
+  function fld(label, ctrl, req) { return '<label class="fm-f"><span class="fm-l">' + label + (req ? '<em>必須</em>' : '') + '</span>' + ctrl + '</label>'; }
+  return '<div class="fm" hidden role="dialog" aria-modal="true" aria-labelledby="fm-t" data-mode="' + esc(f.mode) + '" data-endpoint="' + esc(f.endpoint) + '" data-mail="' + esc(f.mailTo) + '"><div class="fm-back" data-fclose></div>' +
+    '<div class="fm-card"><button type="button" class="m-x fm-x" data-fclose aria-label="' + esc(T.closeLabel || '閉じる') + '">&times;</button>' +
+    '<h2 class="fm-h" id="fm-t">' + esc(T.formTitle) + '</h2>' + (T.formNote ? '<p class="fm-note">' + esc(T.formNote) + '</p>' : '') +
+    '<form class="fm-form" autocomplete="on">' +
+    fld('お名前（ニックネーム可）', '<input type="text" name="お名前" required maxlength="80" autocomplete="name">', true) +
+    fld('ご連絡先（メールアドレス、またはSNSのID）', '<input type="text" name="連絡先" required maxlength="200">', true) +
+    fld('ご希望のプラン', '<select name="プラン">' + opts + '</select>') +
+    fld('ご依頼の内容', '<textarea name="ご依頼内容" rows="6" required maxlength="3000"></textarea>', true) +
+    fld('ご希望の納期', '<input type="text" name="希望納期" maxlength="120">') +
+    fld('参考資料のURL', '<input type="url" name="参考資料URL" maxlength="500" inputmode="url" placeholder="https://...">') +
+    '<input class="fm-hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">' +
+    '<label class="fm-chk"><input type="checkbox" name="確認" value="確認済み" required><span>' + esc(T.formAgree) + '</span></label>' +
+    '<p class="fm-msg" role="status" hidden></p><div class="fm-actions"><button type="submit" class="btn fm-send">' + esc(T.formSend || '送信する') + '</button></div></form>' +
+    '<div class="fm-done" hidden><p>' + esc(T.formThanks) + '</p><button type="button" class="btn" data-fclose>' + esc(T.closeLabel || '閉じる') + '</button></div></div></div>';
+}
 function pageHref(from, to) { return (from === 'home' ? '' : '../') + (to === 'home' ? 'index.html' : to + '/index.html'); }
 function cmImgs(ids, title, one) {
   if (!ids.length) return '';
   return '<div class="cm-imgs' + (one || ids.length === 1 ? ' one' : '') + '" data-ids="' + esc(ids.join(',')) + '" data-t="' + esc(title) + '"></div>';
 }
 function commissionHTML(S) {
-  var T = S.texts, C = S.commission, url = safeUrl(T.commissionUrl);
+  var T = S.texts, C = S.commission, url = safeUrl(T.commissionUrl), useForm = formUsable(S);
+  var sched = scheduleHTML(S, true), ip = cmCountHTML(C.inProgress, T), dn = cmCountHTML(C.done, T);
+  var stats = (ip || dn) ? '<div class="cm-stats">' + (ip ? '<div class="cm-stat"><span class="cm-sl">' + esc(T.statusInProgress) + '</span><span class="cm-sn">' + ip + '</span></div>' : '') + (dn ? '<div class="cm-stat"><span class="cm-sl">' + esc(T.statusDone) + '</span><span class="cm-sn">' + dn + '</span></div>' : '') + '</div>' : '';
   var h = '<section class="gallery gp cm" id="commission"><div class="g-head"><div class="orn" aria-hidden="true">' + BOW + '</div><h2 class="g-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionJa ? '<p class="g-ja">' + esc(T.commissionJa) + '</p>' : '') + '</div>';
-  if (!C.plans.length && !C.blocks.length && !C.intro) return h + '<p class="empty">' + esc(T.commissionEmpty) + '</p></section>';
+  if (!C.plans.length && !C.blocks.length && !C.intro && !sched && !stats) return h + '<p class="empty">' + esc(T.commissionEmpty) + '</p></section>';
   if (C.intro) h += '<p class="cm-intro">' + esc(C.intro) + '</p>';
+  if (sched) h += '<div class="cm-sec cm-sched">' + sched + '</div>';
+  h += stats;
   if (C.plans.length) {
     h += '<div class="cm-sec"><div class="g-head cm-sh"><h2 class="g-en sm">' + esc(T.commissionPlanEn) + '</h2>' + (T.commissionPlanJa ? '<p class="g-ja">' + esc(T.commissionPlanJa) + '</p>' : '') + '</div><div class="cm-plans">' +
       C.plans.map(function (p) {
-        var inp = p.mode !== 'image', head = (p.name ? '<h3 class="cm-pn">' + esc(p.name) + '</h3>' : '') + (inp && p.price ? '<span class="cm-price">' + esc(p.price) + '</span>' : '');
+        var inp = p.mode !== 'image', busy = cmCount(p.busy, T);
+        var right = (inp && p.price ? '<span class="cm-price">' + esc(p.price) + '</span>' : '') + (busy ? '<span class="cm-busy">' + esc(T.statusInProgress) + ' ' + esc(busy) + '</span>' : '');
+        var head = (p.name ? '<h3 class="cm-pn">' + esc(p.name) + '</h3>' : '') + (right ? '<div class="cm-pr">' + right + '</div>' : '');
         return '<article class="cm-plan' + (inp ? '' : ' is-image') + '">' + (head ? '<div class="cm-ph">' + head + '</div>' : '') + (inp && p.desc ? '<p class="cm-desc">' + esc(p.desc) + '</p>' : '') + cmImgs(p.imgs, p.name, !inp) + '</article>';
       }).join('') + '</div></div>';
   }
   C.blocks.forEach(function (b) {
     h += '<div class="cm-block">' + (b.title ? '<h2 class="cm-h">' + esc(b.title) + '</h2>' : '') + (b.body ? '<p class="cm-body">' + esc(b.body) + '</p>' : '') + cmImgs(b.imgs, b.title, false) + '</div>';
   });
-  if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
-  return h + '</section>';
+  if (useForm) h += '<div class="more-wrap cm-apply"><button type="button" class="btn" data-form-open>' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</button></div>';
+  else if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
+  h += '</section>';
+  return h + (useForm ? formHTML(S) : '');
 }
 
 function siteHTML(S, page) {
@@ -277,7 +335,12 @@ function siteHTML(S, page) {
   } else {
     h += commissionHTML(S);
   }
-  if ((cta || hasCm) && page === 'home') h += '<section class="cta" id="commission"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + (hasCm ? '<a class="btn" href="commission/index.html" data-page="commission">' : '<a class="btn" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">') + esc(T.commissionButton || '詳しく見る') + '</a></div></section>';
+var schedTop = scheduleHTML(S, false);
+  if ((cta || hasCm || schedTop) && page === 'home') {
+    var lnk = hasCm ? '<a class="tlink" href="commission/index.html" data-page="commission">' : cta ? '<a class="tlink" href="' + esc(cta) + '" target="_blank" rel="noopener noreferrer">' : '';
+    h += '<section class="cta" id="commission"><div class="cta-card"><h2 class="cta-en">' + esc(T.commissionEn) + '</h2>' + (T.commissionBody ? '<p class="cta-body">' + esc(T.commissionBody) + '</p>' : '') + schedTop +
+      (lnk ? '<p class="cta-more">' + lnk + '<span>' + esc(T.commissionButton || '詳細') + '</span>' + CHEV + '</a></p>' : '') + '</div></section>';
+  }
   h += '<footer class="foot"><span class="copy">' + esc(T.footer) + '</span></footer>';
   h += '<div class="modal" hidden role="dialog" aria-modal="true" aria-label="作品の拡大表示"><div class="m-back" data-close></div>' +
     '<figure class="m-card"><button type="button" class="m-x" data-close aria-label="' + esc(T.closeLabel || '閉じる') + '">&times;</button>' +
@@ -326,6 +389,39 @@ function mountSite(root, S, src, opts) {
       } else if (t.closest('[data-mclose]')) closeMenu(true);
     });
     root.ownerDocument.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !mnav.hidden) closeMenu(true); });
+  }
+  var fmEl = site.querySelector('.fm'), fmOpen = site.querySelector('[data-form-open]');
+  if (fmEl && fmOpen) {
+    var fmForm = fmEl.querySelector('.fm-form'), fmMsg = fmEl.querySelector('.fm-msg'), fmDone = fmEl.querySelector('.fm-done'), fmSend = fmEl.querySelector('.fm-send'), fmLocked = false;
+    var fmShow = function (t, err) { fmMsg.textContent = t; fmMsg.hidden = !t; fmMsg.classList.toggle('err', !!err); };
+    var fmFinish = function () { fmForm.hidden = true; fmDone.hidden = false; fmEl.querySelector('.fm-h').hidden = true; var nt = fmEl.querySelector('.fm-note'); if (nt) nt.hidden = true; };
+    var fmOpenF = function () { fmEl.hidden = false; fmLocked = true; doc.documentElement.style.overflow = 'hidden'; var f1 = fmForm.querySelector('input,textarea'); if (f1 && !fmForm.hidden) f1.focus(); };
+    var fmCloseF = function () { if (fmEl.hidden) return; fmEl.hidden = true; if (fmLocked) { doc.documentElement.style.overflow = ''; fmLocked = false; } fmOpen.focus(); };
+    fmOpen.addEventListener('click', fmOpenF);
+    fmEl.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-fclose]')) fmCloseF(); });
+    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !fmEl.hidden) fmCloseF(); });
+    fmForm.addEventListener('submit', function (e) {
+      e.preventDefault(); fmShow('');
+      if (!fmForm.checkValidity()) { fmForm.reportValidity(); return; }
+      var fd = new FormData(fmForm), mode = fmEl.getAttribute('data-mode');
+      if (fd.get('_gotcha')) { fmFinish(); return; }
+      fd.delete('_gotcha');
+      if (window.SITE_PREVIEW) { fmShow('プレビューでは送信されません。公開したページで、送信を確認してください。'); return; }
+      var plan = fd.get('プラン') ? '（' + fd.get('プラン') + '）' : '';
+      if (mode === 'service') {
+        fd.append('_subject', 'ご依頼フォームから届きました' + plan);
+        fmSend.disabled = true;
+        fetch(fmEl.getAttribute('data-endpoint'), { method: 'POST', headers: { Accept: 'application/json' }, body: fd })
+          .then(function (r) { if (r.ok) fmFinish(); else fmShow('送信できませんでした。時間をおいて、もう一度お試しください。', true); })
+          .catch(function () { fmShow('送信できませんでした。通信の状態を確認して、もう一度お試しください。', true); })
+          .then(function () { fmSend.disabled = false; });
+      } else if (mode === 'mail') {
+        var lines = []; fd.forEach(function (v, k) { lines.push('【' + k + '】\n' + v); });
+        var addr = fmEl.getAttribute('data-mail');
+        fmShow('メールアプリが開きます。内容を確かめて、送信してください。開かないときは、' + addr + ' 宛にご連絡ください。');
+        window.location.href = 'mailto:' + addr + '?subject=' + encodeURIComponent('ご依頼のご連絡' + plan) + '&body=' + encodeURIComponent(lines.join('\n\n'));
+      }
+    });
   }
   if (S.protect && S.protect.noSave) {
     site.classList.add('nosave');
