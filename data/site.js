@@ -377,9 +377,91 @@ window.SITE_DATA = {
       "w": 1000,
       "h": 1200,
       "file": "img-byoghdt1s40r.webp"
+    },
+    "azp3stltz5o1": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-azp3stltz5o1.webp"
+    },
+    "febewg0nz7t4": {
+      "w": 1417,
+      "h": 2000,
+      "file": "img-febewg0nz7t4.webp"
+    },
+    "kiy0w9r2zh9h": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-kiy0w9r2zh9h.webp"
+    },
+    "tjywd4lvzk36": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-tjywd4lvzk36.webp"
+    },
+    "b1qyc76vzphx": {
+      "w": 2000,
+      "h": 2000,
+      "file": "img-b1qyc76vzphx.webp"
+    },
+    "g7tald4mzzby": {
+      "w": 2000,
+      "h": 1667,
+      "file": "img-g7tald4mzzby.webp"
     }
   },
   "works": [
+    {
+      "id": "29zcxzfczhak",
+      "imgId": "kiy0w9r2zh9h",
+      "title": "【イラスト制作】",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "xizbontb5zoi",
+      "plan": "plan-icon",
+      "no": "2026011",
+      "extra": [
+        "tjywd4lvzk36"
+      ]
+    },
+    {
+      "id": "trzpojvbzzd3",
+      "imgId": "g7tald4mzzby",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "xizbontb5zoi",
+      "plan": "plan-single",
+      "no": "2026010",
+      "extra": []
+    },
+    {
+      "id": "1jk64mwbz7u7",
+      "imgId": "febewg0nz7t4",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "xpsun5ly2k0o",
+      "no": "2026009",
+      "extra": []
+    },
+    {
+      "id": "qofya8agz5p5",
+      "imgId": "b1qyc76vzphx",
+      "title": "【サムネイル用イラスト制作】欖式卯美優様",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "8kvuspn1lja2",
+      "no": "2026008",
+      "extra": [
+        "azp3stltz5o1"
+      ]
+    },
     {
       "id": "r4yd779vqaeg",
       "imgId": "byoghdt1s40r",
