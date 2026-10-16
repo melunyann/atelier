@@ -272,7 +272,7 @@ function commissionHTML(S) {
   if (useForm) h += '<div class="more-wrap cm-apply"><button type="button" class="btn" data-form-open>' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</button></div>';
   else if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
   var sl = [['tsunagu', T.siteTsunagu || 'つなぐ'], ['artlink', T.siteArtlink || 'Art link'], ['coconala', T.siteCoconala || 'ココナラ']].filter(function (x) { return C.sites[x[0]]; });
-  if (sl.length) h += '<div class="cm-sites">' + (T.sitesLead ? '<p class="cm-sl2">' + esc(T.sitesLead) + '</p>' : '') + '<p class="cm-sk">' + sl.map(function (x) { return '<a class="tlink" href="' + esc(C.sites[x[0]]) + '" target="_blank" rel="noopener noreferrer"><span>' + esc(x[1]) + '</span>' + CHEV + '</a>'; }).join('') + '</p></div>';
+  if (sl.length) h += '<div class="cm-sites">' + (T.sitesLead ? '<p class="cm-sl2">' + esc(T.sitesLead) + '</p>' : '') + '<p class="cm-sk">' + sl.map(function (x) { return '<a class="tlink" href="' + esc(C.sites[x[0]]) + '" target="_blank" rel="noopener noreferrer"><span>' + esc(x[1]) + '</span></a>'; }).join('') + '</p></div>';
   h += '</section>';
   return h + (useForm ? formHTML(S) : '');
 }
