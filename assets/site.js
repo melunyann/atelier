@@ -1,3 +1,6 @@
+/* melune portfolio — site renderer
+   data/site.js が window.SITE_DATA を用意し、このファイルがページを組み立てます。
+   ふつうはこのファイルを編集する必要はありません。 */
 (function () {
 'use strict';
 
