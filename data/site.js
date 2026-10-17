@@ -60,12 +60,7 @@ window.SITE_DATA = {
     "formSend": "送信する",
     "formThanks": "送信しました。\n内容を確認後、1週間以内にご連絡いたします。\nお受けできない場合でもご連絡させていただきます。こちらから連絡がない場合、お手数ですが再度ご連絡をお願いいたします。\n\n返信は melune25@gmail.com または X @melunyann より行います。"
   },
-  "activities": [
-    "キャラクターイラスト",
-    "ペアイラスト",
-    "立ち絵",
-    "一次創作"
-  ],
+  "activities": [],
   "links": [
     {
       "label": "X",
