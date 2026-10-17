@@ -612,18 +612,6 @@ window.SITE_DATA = {
   },
   "works": [
     {
-      "id": "5uheqlqa0gpc",
-      "imgId": "kytpyavx0gp8",
-      "title": "【証明写真風イラスト】",
-      "desc": "",
-      "cat": "commission",
-      "year": "2026",
-      "style": "d8mzgfjh5v5u",
-      "plan": "plan-icon",
-      "no": "2026023",
-      "extra": []
-    },
-    {
       "id": "gq7t9ucz57n8",
       "imgId": "4pplzx2c57m4",
       "title": "【立ち絵制作】",
@@ -717,6 +705,18 @@ window.SITE_DATA = {
       "style": "d8mzgfjh5v5u",
       "plan": "xpsun5ly2k0o",
       "no": "2026024",
+      "extra": []
+    },
+    {
+      "id": "5uheqlqa0gpc",
+      "imgId": "kytpyavx0gp8",
+      "title": "【証明写真風イラスト】",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "plan-icon",
+      "no": "2026023",
       "extra": []
     },
     {
