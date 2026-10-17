@@ -603,9 +603,26 @@ window.SITE_DATA = {
       "w": 1641,
       "h": 2000,
       "file": "img-mr4pxr899rp5.webp"
+    },
+    "kytpyavx0gp8": {
+      "w": 1166,
+      "h": 1500,
+      "file": "img-kytpyavx0gp8.webp"
     }
   },
   "works": [
+    {
+      "id": "5uheqlqa0gpc",
+      "imgId": "kytpyavx0gp8",
+      "title": "【証明写真風イラスト】",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "plan-icon",
+      "no": "206023",
+      "extra": []
+    },
     {
       "id": "gq7t9ucz57n8",
       "imgId": "4pplzx2c57m4",
@@ -615,7 +632,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "d8mzgfjh5v5u",
       "plan": "1yqelept2pta",
-      "no": "2026030",
+      "no": "2026031",
       "extra": []
     },
     {
@@ -627,7 +644,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "p411n12p5pah",
       "plan": "xpsun5ly2k0o",
-      "no": "2026029",
+      "no": "2026030",
       "extra": []
     },
     {
@@ -639,7 +656,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "zfyr6ffd64zf",
       "plan": "plan-single",
-      "no": "2026028",
+      "no": "2026029",
       "extra": []
     },
     {
@@ -651,7 +668,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "xizbontb5zoi",
       "plan": "mjfl5iye3auw",
-      "no": "2026027",
+      "no": "2026028",
       "extra": []
     },
     {
@@ -663,7 +680,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "p411n12p5pah",
       "plan": "xpsun5ly2k0o",
-      "no": "2026026",
+      "no": "2026027",
       "extra": []
     },
     {
@@ -675,7 +692,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "d8mzgfjh5v5u",
       "plan": "xpsun5ly2k0o",
-      "no": "2026025",
+      "no": "2026026",
       "extra": []
     },
     {
@@ -687,7 +704,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "d8mzgfjh5v5u",
       "plan": "xpsun5ly2k0o",
-      "no": "2026024",
+      "no": "2026025",
       "extra": []
     },
     {
@@ -699,7 +716,7 @@ window.SITE_DATA = {
       "year": "2026",
       "style": "d8mzgfjh5v5u",
       "plan": "xpsun5ly2k0o",
-      "no": "2026023",
+      "no": "2026024",
       "extra": []
     },
     {
