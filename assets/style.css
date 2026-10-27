@@ -1,3 +1,4 @@
+/* melune portfolio — site styles */
 html,body{margin:0;padding:0}
 body{background:#FFF9F8;color-scheme:light}
 img{max-width:100%}
@@ -286,3 +287,5 @@ html{scroll-behavior:auto}
 .site .cm-sites{margin-top:clamp(28px,5vw,40px);text-align:center}.site .cm-sl2{font-size:13px;letter-spacing:.14em;opacity:.7;margin:0 0 14px}.site .cm-sk{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 28px;margin:0}
 
 .site .cm-gl{text-align:center;margin:clamp(28px,5vw,40px) 0 0}
+
+.site .cm-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 16px}.site .btn.btn-sub{background:transparent;border:1px solid var(--accent);color:var(--ink);padding:10px 30px}.site .btn.btn-sub:hover{background:color-mix(in srgb,var(--accent) 22%,transparent)}
