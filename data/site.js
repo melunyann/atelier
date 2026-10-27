@@ -15,6 +15,8 @@ window.SITE_DATA = {
     "commissionBody": "イラストのご依頼を受け付けています。\nお見積りのみでもお気軽にご相談ください。\n\n【受付先】\nX DM、メール\nつなぐ、ココナラ、Art Link\n\nご依頼に関する細かな内容は、以下からご確認をお願いいたします。\nなお、Skebでの金額は料金表の限りではありません。",
     "commissionButton": "詳細",
     "commissionUrl": "https://melunyann.github.io/atelier/commission/index.html",
+    "estimateLabel": "簡易お見積り",
+    "estimateUrl": "https://mitsumotto.com/u/melune",
     "footer": "melune（めるね）",
     "filterLabelCat": "カテゴリー",
     "filterLabelYear": "年",
