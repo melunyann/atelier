@@ -1,3 +1,6 @@
+/* melune portfolio — site renderer
+   data/site.js が window.SITE_DATA を用意し、このファイルがページを組み立てます。
+   ふつうはこのファイルを編集する必要はありません。 */
 (function () {
 'use strict';
 
@@ -40,7 +43,7 @@ function defaultState() {
       closeLabel: '閉じる',
       commissionEn: 'Commission',
       commissionBody: 'イラストのご依頼を受け付けています。\nご依頼の流れや条件は、下のボタンからご確認ください。',
-      commissionButton: '詳細', commissionUrl: '',
+      commissionButton: '詳細', commissionUrl: '', estimateLabel: '簡易お見積り', estimateUrl: '',
       footer: '© 2026 melune',
       filterLabelCat: 'カテゴリー', filterLabelYear: '年', filterLabelStyle: '絵柄', filterLabelPlan: 'プラン', yearSuffix: '年',
       noMatchText: 'この条件に合う作品は、まだありません。',
@@ -275,8 +278,11 @@ function commissionHTML(S) {
   C.blocks.forEach(function (b) {
     h += '<div class="cm-block">' + (b.title ? '<h2 class="cm-h">' + esc(b.title) + '</h2>' : '') + (b.body ? '<p class="cm-body">' + esc(b.body) + '</p>' : '') + cmImgs(b.imgs, b.title, false) + '</div>';
   });
-  if (useForm) h += '<div class="more-wrap cm-apply"><button type="button" class="btn" data-form-open>' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</button></div>';
-  else if (url) h += '<div class="more-wrap cm-apply"><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a></div>';
+  var est = safeUrl(T.estimateUrl), btns = '';
+  if (useForm) btns += '<button type="button" class="btn" data-form-open>' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</button>';
+  else if (url) btns += '<a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(T.commissionApply || 'ご依頼・お問い合わせ') + '</a>';
+  if (est) btns += '<a class="btn btn-sub" href="' + esc(est) + '" target="_blank" rel="noopener noreferrer">' + esc(T.estimateLabel || '簡易お見積り') + '</a>';
+  if (btns) h += '<div class="more-wrap cm-apply cm-btns">' + btns + '</div>';
   var sl = [['tsunagu', T.siteTsunagu || 'つなぐ'], ['artlink', T.siteArtlink || 'Art link'], ['coconala', T.siteCoconala || 'ココナラ']].filter(function (x) { return C.sites[x[0]]; });
   if (sl.length) h += '<div class="cm-sites">' + (T.sitesLead ? '<p class="cm-sl2">' + esc(T.sitesLead) + '</p>' : '') + '<p class="cm-sk">' + sl.map(function (x) { return '<a class="tlink" href="' + esc(C.sites[x[0]]) + '" target="_blank" rel="noopener noreferrer"><span>' + esc(x[1]) + '</span></a>'; }).join('') + '</p></div>';
   if (S.guideline.intro || S.guideline.blocks.length) h += '<p class="cm-gl"><a class="tlink" href="../guideline/index.html" data-page="guideline"><span>' + esc(T.guidelineLink || 'ガイドラインをご確認ください') + '</span></a></p>';
