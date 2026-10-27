@@ -423,6 +423,7 @@ function panelCommission() {
       cmCtl('block', b, i, C.blocks.length) + '</article>';
   });
   h += '<div class="row" style="margin-top:12px">' + ['ご依頼の流れ', 'お支払い方法', '注意事項', ''].map(function (t) { return '<button type="button" class="btn-s" data-act="add-cm-block" data-t="' + t + '">' + (t ? '「' + t + '」を追加' : '空のブロックを追加') + '</button>'; }).join('') + '</div></section>';
+  h += '<section class="ed-card"><h2>簡易お見積り</h2><p class="ed-hint">「ご依頼・お問い合わせ」ボタンの隣に、外部の見積りページへのボタンが出ます。URL（https:// から始まるもの）を入れたときだけ表示されます。</p>' + tin('texts.estimateUrl', '見積りページのURL', { type: 'url', ph: 'https://...' }) + tin('texts.estimateLabel', 'ボタンの文字') + '</section>';
   h += '<section class="ed-card"><h2>各サイトへのリンク</h2><p class="ed-hint">フォームの下に、「各サイト経由でのご相談はこちらから」と、文字リンクが並びます。URLを入れたサイトだけが表示されます（https:// から始まるURL）。</p>' +
     tin('commission.sites.tsunagu', 'つなぐ のURL', { type: 'url', ph: 'https://...' }) + tin('commission.sites.artlink', 'Art link のURL', { type: 'url', ph: 'https://...' }) + tin('commission.sites.coconala', 'ココナラ のURL', { type: 'url', ph: 'https://...' }) +
     tin('texts.sitesLead', '案内の文') + '<div class="pair">' + tin('texts.siteTsunagu', 'つなぐ の表示名') + tin('texts.siteArtlink', 'Art link の表示名') + '</div>' + tin('texts.siteCoconala', 'ココナラ の表示名') + '</section>';
