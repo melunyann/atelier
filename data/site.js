@@ -616,9 +616,43 @@ window.SITE_DATA = {
       "w": 1166,
       "h": 1500,
       "file": "img-kytpyavx0gp8.webp"
+    },
+    "ju1hh2kzqjvv": {
+      "w": 1000,
+      "h": 700,
+      "file": "img-ju1hh2kzqjvv.webp"
+    },
+    "or7lr4ddqmfe": {
+      "w": 1000,
+      "h": 700,
+      "file": "img-or7lr4ddqmfe.webp"
     }
   },
   "works": [
+    {
+      "id": "3g37ggl8qmfg",
+      "imgId": "or7lr4ddqmfe",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "",
+      "no": "2026033",
+      "extra": []
+    },
+    {
+      "id": "29jiaq8hqjvz",
+      "imgId": "ju1hh2kzqjvv",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "xpsun5ly2k0o",
+      "no": "2026032",
+      "extra": []
+    },
     {
       "id": "gq7t9ucz57n8",
       "imgId": "4pplzx2c57m4",
