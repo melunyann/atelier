@@ -53,7 +53,7 @@ window.SITE_DATA = {
     "markOpen": "受付中",
     "markMaybe": "内容によります",
     "markClosed": "受付終了",
-    "statusInProgress": "現在の作業中",
+    "statusInProgress": "作業中",
     "statusDone": "実績数",
     "countSuffix": "件",
     "formTitle": "ご依頼フォーム",
@@ -199,14 +199,15 @@ window.SITE_DATA = {
     ],
     "schedule": {
       "2026-10": "x",
-      "2026-11": "o",
+      "2026-11": "t",
       "2026-12": "o",
       "2027-01": "o",
       "2027-02": "o",
-      "2027-03": "o"
+      "2027-03": "o",
+      "2027-04": "o"
     },
-    "inProgress": "6",
-    "done": "188",
+    "inProgress": "3",
+    "done": "192",
     "sites": {
       "tsunagu": "https://tsunagu.cloud/users/melunyann",
       "artlink": "https://goartlink.com/artists/melunyann",
