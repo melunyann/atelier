@@ -4,7 +4,7 @@ window.SITE_DATA = {
   "v": 1,
   "texts": {
     "siteName": "melune",
-    "tagline": "甘く、繊細に、ときめきを描く。",
+    "tagline": "",
     "intro": "印象的な瞳と柔らかな表情表現で、可愛らしく存在感のあるキャラクターを描いています。",
     "galleryEn": "Gallery",
     "galleryJa": "ギャラリー",
