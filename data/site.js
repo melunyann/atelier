@@ -164,7 +164,7 @@ window.SITE_DATA = {
         "mode": "input",
         "price": "胸上 2,000円 / 腰上 3,500円",
         "desc": "- ラフ提出なし\n- 1名あたりの金額です\n- 非公開対応 +1,500円\n　フルサイズでの公開が不可能な全てのご依頼に適用されます\n- 商用利用 +3,000円～",
-        "busy": "2",
+        "busy": "1",
         "imgs": []
       },
       {
@@ -206,8 +206,8 @@ window.SITE_DATA = {
       "2027-03": "o",
       "2027-04": "o"
     },
-    "inProgress": "3",
-    "done": "192",
+    "inProgress": "2",
+    "done": "193",
     "sites": {
       "tsunagu": "https://tsunagu.cloud/users/melunyann",
       "artlink": "https://goartlink.com/artists/melunyann",
