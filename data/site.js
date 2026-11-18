@@ -297,13 +297,8 @@ window.SITE_DATA = {
     "accent": "#EBA4B7"
   },
   "heroId": "de51tbmd7h77",
-  "iconId": "1dhu4oras7rb",
+  "iconId": "wje7mzne3wh0",
   "imgs": {
-    "1dhu4oras7rb": {
-      "w": 533,
-      "h": 640,
-      "file": "img-1dhu4oras7rb.webp"
-    },
     "de51tbmd7h77": {
       "w": 2560,
       "h": 1440,
@@ -648,6 +643,11 @@ window.SITE_DATA = {
       "w": 1000,
       "h": 1000,
       "file": "img-vcy4xbcs1bim.webp"
+    },
+    "wje7mzne3wh0": {
+      "w": 400,
+      "h": 400,
+      "file": "img-wje7mzne3wh0.jpg"
     }
   },
   "works": [
