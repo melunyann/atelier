@@ -643,9 +643,26 @@ window.SITE_DATA = {
       "w": 1000,
       "h": 1000,
       "file": "img-1l7scjxeq775.webp"
+    },
+    "vcy4xbcs1bim": {
+      "w": 1000,
+      "h": 1000,
+      "file": "img-vcy4xbcs1bim.webp"
     }
   },
   "works": [
+    {
+      "id": "6vs0vc6z1bvf",
+      "imgId": "vcy4xbcs1bim",
+      "title": "",
+      "desc": "",
+      "cat": "commission",
+      "year": "2026",
+      "style": "d8mzgfjh5v5u",
+      "plan": "plan-icon",
+      "no": "2026036",
+      "extra": []
+    },
     {
       "id": "yzdgqc17q788",
       "imgId": "1l7scjxeq775",
